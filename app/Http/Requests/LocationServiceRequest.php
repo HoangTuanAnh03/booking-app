@@ -25,9 +25,9 @@ class LocationServiceRequest extends FormRequest
     {
         return [
             //
-            'venue_id' => 'required|string',
+            'venue_id' => 'required|string|exists:venues,venue_id',
             'service_name' => 'required|string',
-            'price' => 'required|numeric|min:0|max:99999999.99',
+            'price' => 'required|numeric|min:0',
             'is_available' => 'required|boolean',
             'description' => 'required|string',
         ];
