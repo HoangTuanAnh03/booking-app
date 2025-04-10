@@ -24,7 +24,7 @@ interface ILocationServiceService
     /**
      * Find a LocationService by its ID.
      *
-     * @param int $id LocationService UUID
+     * @param int $id LocationService service_id
      * @return LocationService|null LocationService object or null if not found
      */
     public function findById(int $id): ?LocationService;
@@ -40,7 +40,7 @@ interface ILocationServiceService
     /**
      * Update a LocationService by its ID.
      *
-     * @param int $id LocationService UUID
+     * @param int $id LocationService service_id
      * @param LocationServiceRequest $request The validated request data
      * @return LocationService|null The updated LocationService or null if not found
      */
@@ -49,7 +49,7 @@ interface ILocationServiceService
     /**
      * Delete a LocationService by its ID.
      *
-     * @param int $id LocationService UUID
+     * @param int $id LocationService service_id
      * @return LocationService|null The deleted LocationService or null if not found
      */
     public function delete(int $id, Request  $request): ?LocationService;

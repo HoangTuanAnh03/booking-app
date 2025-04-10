@@ -4,50 +4,50 @@
 namespace App\Repository;
 
 /**
- * Interface ILocationServiceRepository
+ * Interface IFieldRepository
  *
- * Defines methods for interacting with the LocationService data source.
+ * Defines methods for interacting with the Field data source.
  */
 interface IFieldRepository
 {
     /**
-     * Get a paginated list of LocationServices.
+     * Get a paginated list of Fields.
      *
-     * @param int $perPage Number of LocationServices per page
-     * @return mixed Paginated list of LocationServices
+     * @param int $perPage Number of Fields per page
+     * @return mixed Paginated list of Fields
      */
     public function show(int $perPage, string $id);
 
     /**
-     * Get a single LocationService by its ID.
+     * Get a single Field by its ID.
      *
-     * @param string $id LocationService UUID
-     * @return mixed LocationService object or null if not found
+     * @param string $id Field field_id
+     * @return mixed Field object or null if not found
      */
     public function getById(string $id);
 
     /**
-     * Store a new LocationService in the database.
+     * Store a new Field in the database.
      *
-     * @param array $data LocationService data to be saved
-     * @return mixed Created LocationService
+     * @param array $data Field data to be saved
+     * @return mixed Created Field
      */
     public function store(array $data);
 
     /**
-     * Update an existing LocationService.
+     * Update an existing Field.
      *
-     * @param array $data Updated LocationService data
-     * @param string $id LocationService UUID
-     * @return mixed Updated LocationService or null if not found
+     * @param array $data Updated Field data
+     * @param string $id Field field_id
+     * @return mixed Updated Field or null if not found
      */
     public function update(array $data, string $id);
 
     /**
-     * Delete a LocationService by its ID.
+     * Delete a Field by its ID.
      *
-     * @param string $id LocationService UUID
-     * @return mixed Deleted LocationService or null if not found
+     * @param string $id Field field_id
+     * @return mixed Deleted Field or null if not found
      */
     public function delete(string $id);
 }

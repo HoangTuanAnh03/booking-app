@@ -24,7 +24,7 @@ interface IFieldService
     /**
      * Find a Field by its ID.
      *
-     * @param string $id Field UUID
+     * @param string $id Field field_id
      * @return Field|null Field object or null if not found
      */
     public function findById(string $id): ?Field;
@@ -40,7 +40,7 @@ interface IFieldService
     /**
      * Update a Field by its ID.
      *
-     * @param string $id Field UUID
+     * @param string $id Field field_id
      * @param FieldRequest $request The validated request data
      * @return Field|null The updated Field or null if not found
      */
@@ -49,7 +49,7 @@ interface IFieldService
     /**
      * Delete a Field by its ID.
      *
-     * @param string $id Field UUID
+     * @param string $id Field field_id
      * @return Field|null The deleted Field or null if not found
      */
     public function delete(string $id, Request  $request): ?Field;

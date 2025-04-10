@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 //use App\Http\Controllers\ProductController;
 use App\Http\Controllers\FieldController;
+use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SportTypeController;
@@ -49,6 +50,16 @@ Route::prefix('locationServices')->group(function () {
         Route::post('/', [LocationServiceController::class, 'store']);
         Route::put('/{id}', [LocationServiceController::class, 'update']);
         Route::delete('/{id}', [LocationServiceController::class, 'delete']);
+    });
+});
+
+// Review routes
+Route::prefix('reviews')->group(function () {
+    Route::get('/getByVenueId/{id}', [ReviewController::class, 'index']);
+    Route::get('/{id}', [ReviewController::class, 'findById']);
+    Route::middleware(['auth:sanctum'])->group(function () {
+        Route::post('/', [ReviewController::class, 'store']);
+        Route::delete('/{id}', [ReviewController::class, 'delete']);
     });
 });
 

@@ -7,9 +7,7 @@ use App\Models\LocationService;
 use App\Repository\ILocationServiceRepository;
 use App\Repository\IVenueRepository;
 use App\Services\ILocationServiceService;
-use http\Exception;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 class LocationServiceService implements ILocationServiceService
 {

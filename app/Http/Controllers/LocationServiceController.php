@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\LocationServiceRequest;
-use App\Models\LocationService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use App\Services\ILocationServiceService;

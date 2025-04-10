@@ -7,8 +7,6 @@ use App\Models\Field;
 use App\Repository\IFieldRepository;
 use App\Repository\IVenueRepository;
 use App\Services\IFieldService;
-use http\Exception;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 class FieldService implements IFieldService
