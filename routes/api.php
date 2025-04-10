@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FieldController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\VenuePaymentController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SportTypeController;
 use App\Http\Controllers\LocationServiceController;
@@ -84,4 +85,14 @@ Route::prefix('venues')->group(function () {
         Route::put('/{id}', [VenueController::class, 'update']);
         Route::delete('/{id}', [VenueController::class, 'delete']);
     });
+});
+
+Route::get('/paymentRemiderEmail/IAMTDFHAHAHAHAHAHAHAH', [VenuePaymentController::class, 'paymentRemiderEmail']);
+Route::get('/unpaidVenueLocking/IAMTDFHAHAHAHAHAHAHAH', [VenuePaymentController::class, 'unpaidVenueLocking']);
+
+Route::post('/webhook/IAMTDFHAHAHAHAHAHAHAH', [VenuePaymentController::class, 'handle']);
+
+Route::middleware(['auth:sanctum', 'ability:owner'])->group(function () {
+    Route::post('/venuePayment/{venue_id}', [VenuePaymentController::class, 'make']);
+    Route::get('/venuePayment', [VenuePaymentController::class, 'getAllVenueByOwnerId']);
 });
