@@ -8,11 +8,13 @@ class FieldRepository implements IFieldRepository
 {
     public function show(int $perPage, string $id) {
 
-        return Field::where('venue_id', $id)->paginate($perPage);
+        return Field::with('openingHourToday')
+            ->where('venue_id', $id)
+            ->paginate($perPage);
     }
 
     public function getById(string $id) {
-        return Field::where('field_id', $id)->first();
+        return Field::with('openingHoursWeek')->where('field_id', $id)->first();
     }
 
     public function store(array $data) {

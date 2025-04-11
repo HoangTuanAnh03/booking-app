@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FieldController;
+use App\Http\Controllers\FieldOpeningHoursController;
 use App\Http\Controllers\LocationServiceController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SportTypeController;
@@ -92,5 +93,19 @@ Route::post('/webhook/handlePayment', [VenuePaymentController::class, 'handle'])
 Route::middleware(['auth:sanctum', 'ability:owner'])->group(function () {
     Route::post('/venuePayment/{venue_id}', [VenuePaymentController::class, 'make']);
     Route::get('/venuePayment', [VenuePaymentController::class, 'getAllVenueByOwnerId']);
+});
+
+//Field Opening Hours
+Route::get('/showByFieldId/{fieldId}', [FieldOpeningHoursController::class, 'showByFieldId']);
+Route::middleware(['auth:sanctum', 'ability:owner'])->group(function () {
+    Route::post('/openingHours/test', [FieldOpeningHoursController::class, 'test']);
+    Route::post('/openingHours', [FieldOpeningHoursController::class, 'store']);
+    Route::put('/openingHours', [FieldOpeningHoursController::class, 'store']);
+});
+
+
+Route::post('/test-log2', function () {
+    \Illuminate\Support\Facades\Log::info('Test log');
+    return response()->json(['message' => 'OK123123']);
 });
 
