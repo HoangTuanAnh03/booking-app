@@ -2,6 +2,8 @@
 
 namespace App\Repository;
 
+use Illuminate\Support\Arr;
+
 /**
  * Interface IVenueRepository
  *
@@ -15,7 +17,7 @@ interface IVenueRepository
      * @param int $perPage Number of venues per page
      * @return mixed Paginated list of venues
      */
-    public function show(int $perPage);
+    public function show(array $data);
 
     /**
      * Get a single venue by its ID.
@@ -49,4 +51,7 @@ interface IVenueRepository
      * @return mixed Deleted venue or null if not found
      */
     public function delete(string $id);
+
+    // public function searchByFilter(array $data);
+
 }

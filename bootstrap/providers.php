@@ -7,4 +7,5 @@ return [
     App\Providers\SportTypeProvider::class,
     App\Providers\UserServiceProvider::class,
     App\Providers\VenueProvider::class,
+    App\Providers\VenueImageProvider::class,
 ];

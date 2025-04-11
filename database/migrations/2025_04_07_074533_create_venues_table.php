@@ -22,6 +22,8 @@ return new class extends Migration
             // $table->string('coordinates');
             $table->geometry('coordinates', subtype: 'point')->nullable();
             $table->enum('status', ['active', 'locked'])->default('locked');
+            $table->string('bank_account_number');
+            $table->string('bank_name');
             $table->timestamps();
         });
     }

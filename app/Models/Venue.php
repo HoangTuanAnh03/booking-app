@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use MatanYadaev\EloquentSpatial\Objects\Point;
 
 class Venue extends Model
@@ -26,6 +27,13 @@ class Venue extends Model
         'longitude',
         'latitude',
         'coordinates',
+        'bank_account_number',
+        'bank_name',
         'status',
     ];
+
+    public function images(): HasMany
+    {
+        return $this->hasMany(VenueImage::class, 'venue_id', 'venue_id');
+    }
 }
