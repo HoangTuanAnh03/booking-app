@@ -10,4 +10,5 @@ return [
     App\Providers\UserServiceProvider::class,
     App\Providers\VenueProvider::class,
     App\Providers\VenuePaymentProvider::class,
+    App\Providers\FieldOpeningHoursProvider::class,
 ];
