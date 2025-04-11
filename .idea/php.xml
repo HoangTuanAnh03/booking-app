@@ -131,6 +131,9 @@
       <path value="$PROJECT_DIR$/vendor/laravel/sanctum" />
       <path value="$PROJECT_DIR$/vendor/barryvdh/laravel-ide-helper" />
       <path value="$PROJECT_DIR$/vendor/barryvdh/reflection-docblock" />
+      <path value="$PROJECT_DIR$/vendor/matanyadaev/laravel-eloquent-spatial" />
+      <path value="$PROJECT_DIR$/vendor/payos/payos" />
+      <path value="$PROJECT_DIR$/vendor/phayes/geophp" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="8.2" />

@@ -34,8 +34,7 @@ class UserController extends Controller
         // Return the user data using UserResource
         return $this->successResponse(
             new UserResource($user),
-            'Get my info successfully.',
-            200
+            'Get my info successfully.'
         );
     }
 }

@@ -62,7 +62,7 @@ class SportTypeController extends Controller
         if (!$data) {
             return $this->errorResponse("Updated Sport Type Failed", 500);
         }
-        return $this->successResponse($data, "Updated Sport Type by id", 200);
+        return $this->successResponse($data, "Updated Sport Type by id");
     }
 
     /**

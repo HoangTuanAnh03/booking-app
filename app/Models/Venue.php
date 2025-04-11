@@ -9,7 +9,6 @@ use MatanYadaev\EloquentSpatial\Objects\Point;
 
 class Venue extends Model
 {
-    //
     use HasFactory;
 
     protected $casts = [
