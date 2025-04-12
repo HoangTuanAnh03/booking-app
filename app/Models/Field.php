@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -34,6 +35,11 @@ class Field extends Model
     {
         return $this->hasMany(FieldOpeningHours::class, 'field_id', 'field_id')
             ->select('field_id', 'day_of_week', 'opening_time', 'closing_time');
+    }
+
+    public function sportType(): BelongsTo
+    {
+        return $this->belongsTo(SportType::class, 'sport_type_id', 'sport_type_id');
     }
 
 }

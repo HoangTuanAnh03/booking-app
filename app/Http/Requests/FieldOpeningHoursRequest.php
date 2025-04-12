@@ -24,7 +24,7 @@ class FieldOpeningHoursRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'field_id' => 'required|uuid|exists:fields,field_id',
+            'field_id' => 'required|string|exists:fields,field_id',
             'opening_hours' => 'required|array|min:1',
             'opening_hours.*.day_of_week' => 'required|in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
             'opening_hours.*.opening_time' => 'required|date_format:H:i',

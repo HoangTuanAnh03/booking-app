@@ -4,6 +4,7 @@ namespace App\Repository\Impl;
 
 use App\Models\Venue;
 use App\Repository\IVenueRepository;
+use Illuminate\Support\Collection;
 
 class VenueRepository implements IVenueRepository
 {
@@ -44,5 +45,42 @@ class VenueRepository implements IVenueRepository
 
         $venue->delete();
         return $venue;
+    }
+
+    public function venueForMap(): Collection{
+        return Venue::with(['fields.sportType'])
+            ->get()
+            ->map(function ($venue) {
+                return [
+                    'venue_id' => $venue->venue_id,
+                    'venue_name' => $venue->name,
+                    'latitude' => $venue->latitude,
+                    'longitude' => $venue->longitude,
+                    'sport_types' => $venue->fields->pluck('sportType.name')->unique()->values(),
+                ];
+            });
+    }
+
+    public function getVenueDetail(string $venueId): array
+    {
+        $venue = Venue::with(['owner', 'fields.openingHourToday'])
+            ->where('venue_id', $venueId)
+            ->firstOrFail();
+
+        $openingHours = $venue->fields
+            ->pluck('openingHourToday')
+            ->filter();
+
+        $earliestOpening = $openingHours->min('opening_time');
+        $latestClosing = $openingHours->max('closing_time');
+
+        return [
+            'venue_id' => $venue->venue_id,
+            'venue_name' => $venue->name,
+            'venue_address' => $venue->address,
+            'phone_number' => $venue->owner?->phone_number,
+            'opening' => $earliestOpening,
+            'closing' => $latestClosing,
+        ];
     }
 }

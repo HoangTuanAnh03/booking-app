@@ -37,4 +37,6 @@ interface IFieldOpeningHoursRepository
      * @return array Danh sách giờ mở cửa.
      */
     public function getByFieldId($fieldId): array;
+
+    public function getByFieldIdAndDayOfWeek($fieldId, $dayOfWeek);
 }

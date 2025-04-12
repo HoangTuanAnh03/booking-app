@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FieldController;
 use App\Http\Controllers\FieldOpeningHoursController;
+use App\Http\Controllers\FieldPriceController;
 use App\Http\Controllers\LocationServiceController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SportTypeController;
@@ -68,6 +69,8 @@ Route::prefix('fields')->group(function () {
 // Venue routes
 Route::prefix('venues')->group(function () {
     Route::get('/', [VenueController::class, 'index']);
+    Route::get('/map', [VenueController::class, 'venueForMap']);
+    Route::get('/detail/{venueId}', [VenueController::class, 'getVenueDetail']);
     Route::get('/search_by_id/{venue_id}', [VenueController::class, 'findById']);
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [VenueController::class, 'store']);
@@ -109,3 +112,9 @@ Route::post('/test-log2', function () {
     return response()->json(['message' => 'OK123123']);
 });
 
+//Field Price
+
+Route::get('/fieldPrice/{fieldId}', [FieldPriceController::class, 'get']);
+Route::middleware(['auth:sanctum', 'ability:owner'])->group(function () {
+    Route::post('/fieldPrice/{fieldId}', [FieldPriceController::class, 'save']);
+});
