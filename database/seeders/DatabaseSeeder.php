@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             FieldsTableSeeder::class,
             FieldOpeningHoursTableSeeder::class,
             ReviewsTableSeeder::class,
+            FieldPriceSeeder::class,
         ]);
     }
 }

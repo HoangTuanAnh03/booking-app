@@ -90,5 +90,11 @@ class VenueService implements IVenueService
 
     //     return $this->repository->searchByFilter($data);
     // }
+    public function venueForMap(): Collection {
+        return $this->repository->venueForMap();
+    }
 
+    public function getVenueDetail(string $venueId): array{
+        return $this->repository->getVenueDetail($venueId);
+    }
 }

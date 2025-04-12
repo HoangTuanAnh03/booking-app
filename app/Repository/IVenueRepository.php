@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 
 /**
  * Interface IVenueRepository
@@ -54,4 +55,7 @@ interface IVenueRepository
 
     // public function searchByFilter(array $data);
 
+    public function venueForMap(): Collection;
+
+    public function getVenueDetail(string $venueId): array;
 }

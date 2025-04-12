@@ -128,4 +128,13 @@ class VenueController extends Controller
         return $this->successResponse($data, "Deleted Venue by id");
     }
 
+    public function venueForMap(): JsonResponse{
+        $data = $this->venueService->venueForMap();
+        return $this->successResponse($data, "List of Venues for map");
+    }
+
+    public function getVenueDetail(string $venueId): JsonResponse{
+        $data = $this->venueService->getVenueDetail($venueId);
+        return $this->successResponse($data, "Detail of Venue for map");
+    }
 }

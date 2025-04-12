@@ -8,6 +8,7 @@ use App\Models\FieldOpeningHours;
 use App\Repository\IFieldOpeningHoursRepository;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class FieldOpeningHoursRepository implements IFieldOpeningHoursRepository
 {
@@ -27,6 +28,7 @@ class FieldOpeningHoursRepository implements IFieldOpeningHoursRepository
         FieldOpeningHours::where('field_id', $fieldId)->delete();
         try{
             return DB::transaction(function () use ($fieldOpeningHours, $fieldId) {
+                FieldOpeningHours::where('field_id', $fieldId)->delete();
                 $result = [];
                 foreach ($fieldOpeningHours['opening_hours'] as $hour) {
                     $record = FieldOpeningHours::create([
@@ -57,5 +59,16 @@ class FieldOpeningHoursRepository implements IFieldOpeningHoursRepository
 
     public function getByFieldId($fieldId): array{
         return FieldOpeningHours::Where('field_id', $fieldId)->get()->toArray();
+    }
+
+    public function getByFieldIdAndDayOfWeek($fieldId, $dayOfWeek){
+        $dayOfWeek = ucfirst(strtolower($dayOfWeek));
+        $record = FieldOpeningHours::where('field_id', $fieldId)
+            ->where('day_of_week', $dayOfWeek)
+            ->first();
+        if (!$record) {
+            Log::warning("Không tìm thấy opening hour cho field_id=$fieldId, day_of_week=$dayOfWeek");
+        }
+        return $record;
     }
 }

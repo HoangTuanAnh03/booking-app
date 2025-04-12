@@ -4,6 +4,7 @@ namespace App\Services;
 use App\Http\Requests\PaginatingDataVenueRequest;
 use App\Http\Requests\VenueFormRequest;
 use App\Models\Venue;
+use Illuminate\Support\Collection;
 
 /**
  * Interface IVenueService
@@ -63,4 +64,18 @@ interface IVenueService
 
     // public function searchByFilter(PaginatingDataVenueRequest $request);
 
+    /**
+     * Get a collection of venues for the map.
+     *
+     * @return Collection
+     */
+    public function venueForMap(): Collection;
+
+    /**
+     * Get the detailed information of a specific venue by its ID.
+     *
+     * @param string $venueId
+     * @return array
+     */
+    public function getVenueDetail(string $venueId): array;
 }

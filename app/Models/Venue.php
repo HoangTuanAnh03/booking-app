@@ -35,4 +35,14 @@ class Venue extends Model
     {
         return $this->hasMany(VenueImage::class, 'venue_id', 'venue_id');
     }
+
+    public function fields(): HasMany
+    {
+        return $this->hasMany(Field::class, 'venue_id', 'venue_id');
+    }
+
+    public function owner()
+    {
+        return $this->belongsTo(User::class, 'owner_id', 'uuid');
+    }
 }
