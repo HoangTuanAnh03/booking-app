@@ -61,3 +61,24 @@ INSERT INTO `fields` (`field_id`, `venue_id`, `sport_type_id`, `field_name`, `de
 ('dcb38c24-adb0-4c57-9551-ed4413becf4p', '7d465e0a-ce6b-4bf5-9327-228de8b96302', 1, 'Cầu Lông', 150000.00, 1, '2025-04-10 19:54:55', '2025-04-10 19:54:55');
 
 
+--
+-- Dumping data for table `field_opening_hours`
+--
+
+INSERT INTO field_opening_hours (field_id, day_of_week, opening_time, closing_time, created_at, updated_at)
+VALUES
+('dcb38c24-adb0-4c57-9551-ed4413becf4o', 'monday',    '06:00:00', '22:00:00', NOW(), NOW()),
+('dcb38c24-adb0-4c57-9551-ed4413becf4o', 'tuesday',   '07:00:00', '21:30:00', NOW(), NOW()),
+('dcb38c24-adb0-4c57-9551-ed4413becf4o', 'wednesday', '08:00:00', '22:00:00', NOW(), NOW()),
+('dcb38c24-adb0-4c57-9551-ed4413becf4o', 'thursday',  '07:30:00', '21:00:00', NOW(), NOW()),
+('dcb38c24-adb0-4c57-9551-ed4413becf4o', 'friday',    '06:30:00', '23:00:00', NOW(), NOW()),
+('dcb38c24-adb0-4c57-9551-ed4413becf4o', 'saturday',  '07:00:00', '23:30:00', NOW(), NOW()),
+('dcb38c24-adb0-4c57-9551-ed4413becf4o', 'sunday',    '08:00:00', '20:00:00', NOW(), NOW()),
+
+('dcb38c24-adb0-4c57-9551-ed4413becf4m', 'monday',    '06:00:00', '22:00:00', NOW(), NOW()),
+('dcb38c24-adb0-4c57-9551-ed4413becf4m', 'tuesday',   '07:00:00', '21:30:00', NOW(), NOW()),
+('dcb38c24-adb0-4c57-9551-ed4413becf4m', 'wednesday', '08:00:00', '22:00:00', NOW(), NOW()),
+('dcb38c24-adb0-4c57-9551-ed4413becf4m', 'thursday',  '07:30:00', '21:00:00', NOW(), NOW()),
+('dcb38c24-adb0-4c57-9551-ed4413becf4m', 'friday',    '06:30:00', '23:00:00', NOW(), NOW()),
+('dcb38c24-adb0-4c57-9551-ed4413becf4m', 'saturday',  '07:00:00', '23:30:00', NOW(), NOW()),
+('dcb38c24-adb0-4c57-9551-ed4413becf4m', 'sunday',    '08:00:00', '20:00:00', NOW(), NOW());
