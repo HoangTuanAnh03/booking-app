@@ -30,8 +30,8 @@ class VenuesTableSeeder extends Seeder
             ],
             [
                 'venue_id' => '8aa84f24-773d-4e16-a40d-cc449abb4151',
-                'owner_id' => '6f6199b6-6bbf-41b4-8bf7-72dbc044f6fe',
-                'name' => 'Venue 1 của Owner 2',
+                'owner_id' => '2adacea2-7414-4ed3-9bac-4632f29cca5c',
+                'name' => 'Venue 1 của Owner 1',
                 'address' => 'Hà Nội',
                 'longitude' => 105.8417,
                 'latitude' => 21.002,

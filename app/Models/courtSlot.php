@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class courtSlot extends Model
 {
     protected $table = 'court_slots';
     protected $primaryKey = 'slot_id';
-    public $incrementing = false; 
+    public $incrementing = false;
     protected $keyType = 'string';
 
     protected $fillable = [
@@ -17,11 +18,12 @@ class courtSlot extends Model
         'booking_court_id',
         'start_time',
         'end_time',
+        'date',
         'is_looked',
         'locked_by_owner',
     ];
 
-    public $timestamps = false;
+//    public $timestamps = false;
 
     // Quan hệ: CourtSlot thuộc về Court
     public function court(): BelongsTo

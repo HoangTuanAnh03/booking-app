@@ -3,7 +3,9 @@
 namespace App\Repository\Impl;
 
 use App\Models\Court;
+use App\Models\CourtSlot;
 use App\Repository\ICourtRepository;
+use Illuminate\Support\Facades\DB;
 
 class CourtRepository implements ICourtRepository
 {
@@ -38,5 +40,13 @@ class CourtRepository implements ICourtRepository
 
         $court->delete();
         return $court;
+    }
+
+    public function getOwnerId(string $courtId){
+        return DB::table('courts')
+            ->join('fields', 'courts.field_id', '=', 'fields.field_id')
+            ->join('venues', 'fields.venue_id', '=', 'venues.venue_id')
+            ->where('courts.court_id', $courtId)
+            ->value('venues.owner_id');
     }
 }

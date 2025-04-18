@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             FieldOpeningHoursTableSeeder::class,
             ReviewsTableSeeder::class,
             FieldPriceSeeder::class,
+            CourtSeeder::class,
         ]);
     }
 }

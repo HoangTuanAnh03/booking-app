@@ -3,10 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class bookingCourt extends Model
 {
-    protected $table = 'booking_courts'; 
+    protected $table = 'booking_courts';
 
     protected $primaryKey = 'booking_court_id';
     public $incrementing = true;

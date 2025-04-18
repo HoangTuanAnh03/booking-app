@@ -29,7 +29,7 @@ class UsersTableSeeder extends Seeder
             [
                 'uuid' => '2adacea2-7414-4ed3-9bac-4632f29cca5c',
                 'name' => 'OWNER 1',
-                'email' => 'owner1@gmail.com',
+                'email' => 'thaidangfa@gmail.com',
                 'phone_number' => '+84987654321',
                 'email_verified_at' => '2025-04-09 12:07:50',
                 'password' => '$2y$12$43fbpisJuV4zlaiPBPjmjuAOxg2Z4fka92OBj12MJFTC.kvSAoH.W',

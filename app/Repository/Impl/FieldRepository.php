@@ -3,6 +3,7 @@ namespace App\Repository\Impl;
 
 use App\Models\Field;
 use App\Repository\IFieldRepository;
+use Illuminate\Support\Facades\DB;
 
 class FieldRepository implements IFieldRepository
 {
@@ -35,5 +36,12 @@ class FieldRepository implements IFieldRepository
 
         $Field->delete();
         return $Field;
+    }
+
+    public function getOwnerId(string $fieldId){
+        return DB::table('fields')
+            ->join('venues', 'fields.venue_id', '=', 'venues.venue_id')
+            ->where('fields.field_id', $fieldId)
+            ->value('venues.owner_id');
     }
 }

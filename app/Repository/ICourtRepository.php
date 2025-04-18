@@ -9,4 +9,5 @@ interface ICourtRepository
     public function store(array $data);
     public function update(array $data, string $id);
     public function delete(string $id);
+    public function getOwnerId(string $courtId);
 }

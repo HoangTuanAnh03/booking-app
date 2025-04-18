@@ -50,4 +50,6 @@ interface IFieldRepository
      * @return mixed Deleted Field or null if not found
      */
     public function delete(string $id);
+
+    public function getOwnerId(string $fieldId);
 }

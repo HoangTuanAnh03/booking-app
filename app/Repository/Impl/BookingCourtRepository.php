@@ -39,4 +39,9 @@ class BookingCourtRepository implements IBookingCourtRepository
         $bookingCourt->delete();
         return $bookingCourt;
     }
+
+    public function getByBookingId(string $bookingId){
+        return BookingCourt::where('booking_id', $bookingId)->get();
+    }
+
 }

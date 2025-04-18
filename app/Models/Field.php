@@ -41,5 +41,13 @@ class Field extends Model
     {
         return $this->belongsTo(SportType::class, 'sport_type_id', 'sport_type_id');
     }
+    public function courts(): HasMany
+    {
+        return $this->hasMany(Court::class, 'field_id', 'field_id');
+    }
 
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class, 'field_id', 'field_id');
+    }
 }

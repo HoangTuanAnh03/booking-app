@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BookingController;
 use App\Http\Controllers\FieldController;
 use App\Http\Controllers\FieldOpeningHoursController;
 use App\Http\Controllers\FieldPriceController;
@@ -12,8 +13,6 @@ use App\Http\Controllers\VenueController;
 use App\Http\Controllers\VenueImageController;
 use App\Http\Controllers\VenuePaymentController;
 use App\Http\Controllers\CourtController;
-use App\Http\Controllers\CourtSlotController;
-use App\Http\Controllers\BookingCourtController;
 use Illuminate\Support\Facades\Route;
 
 // Auth routes
@@ -24,7 +23,7 @@ Route::get('/verifyEmail', [AuthController::class, 'verifyEmail']);
 
 // User routes
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/me', [UserController::class, 'me']);                                                                
+    Route::get('/me', [UserController::class, 'me']);
 });
 
 // SportType routes
@@ -108,25 +107,25 @@ Route::prefix('court')->group(function () {
         Route::post('/', [CourtController::class, 'store']);
         Route::put('/{court_id}', [CourtController::class, 'update']);
         Route::delete('/{court_id}', [CourtController::class, 'delete']);
-    }); 
-});
-
-Route::prefix('courtslot')->group(function () {
-    Route::get('/', [CourtSlotController::class, 'index']);
-    Route::get('/{slot_id}', [CourtSlotController::class, 'findById']);
-    Route::middleware(['auth:sanctum', 'ability:owner'])->group(function () {
-        Route::post('/', [CourtSlotController::class, 'store']);
-        Route::put('/{slot_id}', [CourtSlotController::class, 'update']);
-        Route::delete('/{slot_id}', [CourtSlotController::class, 'delete']);
     });
 });
-Route::prefix('bookingcourt')->group(function () {
-    Route::get('/', [BookingCourtController::class, 'index']);
-    Route::get('/{booking_court_id}', [BookingCourtController::class, 'findById']);
-    Route::post('/', [BookingCourtController::class, 'store']);
-    Route::put('/{booking_court_id}', [BookingCourtController::class, 'update']);
-    Route::delete('/{booking_court_id}', [BookingCourtController::class, 'delete']);
-});
+
+//Route::prefix('courtslot')->group(function () {
+//    Route::get('/', [CourtSlotController::class, 'index']);
+//    Route::get('/{slot_id}', [CourtSlotController::class, 'findById']);
+//    Route::middleware(['auth:sanctum', 'ability:owner'])->group(function () {
+//        Route::post('/', [CourtSlotController::class, 'store']);
+//        Route::put('/{slot_id}', [CourtSlotController::class, 'update']);
+//        Route::delete('/{slot_id}', [CourtSlotController::class, 'delete']);
+//    });
+//});
+//Route::prefix('bookingcourt')->group(function () {
+//    Route::get('/', [BookingCourtController::class, 'index']);
+//    Route::get('/{booking_court_id}', [BookingCourtController::class, 'findById']);
+//    Route::post('/', [BookingCourtController::class, 'store']);
+//    Route::put('/{booking_court_id}', [BookingCourtController::class, 'update']);
+//    Route::delete('/{booking_court_id}', [BookingCourtController::class, 'delete']);
+//});
 //Field Opening Hours
 Route::get('/showByFieldId/{fieldId}', [FieldOpeningHoursController::class, 'showByFieldId']);
 Route::middleware(['auth:sanctum', 'ability:owner'])->group(function () {
@@ -145,5 +144,26 @@ Route::post('/test-log2', function () {
 Route::get('/fieldPrice/{fieldId}', [FieldPriceController::class, 'get']);
 Route::middleware(['auth:sanctum', 'ability:owner'])->group(function () {
     Route::post('/fieldPrice/{fieldId}', [FieldPriceController::class, 'save']);
+});
+
+//Booking
+Route::prefix('/bookings')->group(function () {
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::middleware('ability:user')->group(function () {
+            Route::post('', [BookingController::class, 'store']);
+            Route::get('/{id}/confirm', [BookingController::class, 'confirm']);
+            Route::get('/stats', [BookingController::class, 'getUserBookingStats']);
+            Route::get('/{bookingId}', [BookingController::class, 'getPaymentQRCode']);
+        });
+        Route::middleware('ability:owner')->group(function () {
+            Route::get('/{id}/complete', [BookingController::class, 'completeBooking']);
+            Route::post('/lock', [BookingController::class, 'lock']);
+            Route::get('/', [BookingController::class, 'getOwnerBookingStats']);
+        });
+        Route::middleware('ability:owner,user')->group(function () {
+            Route::get('/{id}/cancel', [BookingController::class, 'cancelBooking']);
+        });
+    });
+    Route::post('/isLock', [BookingController::class, 'isLock']);
 });
 
