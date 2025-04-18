@@ -48,17 +48,33 @@ class VenueRepository implements IVenueRepository
     }
 
     public function venueForMap(): Collection{
-        return Venue::with(['fields.sportType'])
+        return Venue::with('fields.sportType')
             ->get()
             ->map(function ($venue) {
+                $sportTypes = [];
+
+                foreach ($venue->fields as $field) {
+                    if ($field->sportType) {
+                        $sportTypes[] = [
+                            'id' => $field->sportType->sport_type_id,
+                            'name' => $field->sportType->name,
+                        ];
+                    }
+                }
+
+                // Loại bỏ trùng lặp theo 'id'
+                $uniqueSportTypes = collect($sportTypes)->unique('id')->values();
+
                 return [
                     'venue_id' => $venue->venue_id,
                     'venue_name' => $venue->name,
                     'latitude' => $venue->latitude,
                     'longitude' => $venue->longitude,
-                    'sport_types' => $venue->fields->pluck('sportType.name')->unique()->values(),
+                    'address' => $venue->address,
+                    'sport_types' => $uniqueSportTypes,
                 ];
             });
+
     }
 
     public function getVenueDetail(string $venueId): array
