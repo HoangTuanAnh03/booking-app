@@ -19,12 +19,12 @@ return new class extends Migration
             $table->string('address');
             $table->decimal('longitude', 11, 8);
             $table->decimal('latitude', 11, 8);
-            // $table->string('coordinates');
-            $table->geometry('coordinates', subtype: 'point')->nullable();
-            $table->enum('status', ['active', 'locked'])->default('locked');
+            $table->geometry('coordinates', subtype: 'point');
+            $table->enum('status', ['active', 'locked', 'banned'])->default('locked');
             $table->string('bank_account_number');
             $table->string('bank_name');
             $table->timestamps();
+            $table->spatialIndex('coordinates');
         });
     }
 

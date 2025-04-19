@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\FieldController;
@@ -167,3 +168,11 @@ Route::prefix('/bookings')->group(function () {
     Route::post('/isLock', [BookingController::class, 'isLock']);
 });
 
+Route::prefix('/admin')->group(function () {
+    Route::middleware(['auth:sanctum', 'ability:admin'])->group(function () {
+        Route::get('/users', [AdminController::class, 'getUsers']);
+        Route::get('/users/{userId}/upRole', [AdminController::class, 'upRole']);
+        Route::get('/users/{userId}', [AdminController::class, 'getVenueByUid']);
+        Route::get('/venues/{venueId}/activate', [AdminController::class, 'activateVenue']);
+    });
+});

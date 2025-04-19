@@ -78,4 +78,20 @@ interface IVenueService
      * @return array
      */
     public function getVenueDetail(string $venueId): array;
+
+    /**
+     * Retrieves venues associated with a user ID.
+     *
+     * @param string $userId The user ID.
+     * @return Collection The collection of venues.
+     */
+    public function getVenueByUid(string $userId): Collection;
+
+    /**
+     * Activates a venue by ID.
+     *
+     * @param string $venueId The venue ID.
+     * @return Venue The activated venue object.
+     */
+    public function activateVenue(string $venueId): Venue;
 }
