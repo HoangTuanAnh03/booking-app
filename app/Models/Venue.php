@@ -6,11 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use MatanYadaev\EloquentSpatial\Objects\Point;
+use MatanYadaev\EloquentSpatial\Traits\HasSpatial;
 
 class Venue extends Model
 {
     use HasFactory;
-
+    use HasSpatial;
     protected $casts = [
         'coordinates' => Point::class,
     ];
@@ -31,6 +32,8 @@ class Venue extends Model
         'status',
     ];
 
+    protected array $spatialFields = ['coordinates'];
+
     public function images(): HasMany
     {
         return $this->hasMany(VenueImage::class, 'venue_id', 'venue_id');
@@ -44,5 +47,10 @@ class Venue extends Model
     public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id', 'uuid');
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(VenuePayment::class, 'venue_id', 'venue_id');
     }
 }

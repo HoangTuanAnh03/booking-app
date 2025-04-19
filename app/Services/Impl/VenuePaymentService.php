@@ -149,7 +149,7 @@ class VenuePaymentService implements IVenuePaymentService
     {
         $venues = $this->venuePaymentRepository->getAllVenueByOwnerId();
         foreach ($venues as $venue) {
-            $venue->status = 'locked';
+            $venue->status = 'banned';
             $venue->save();
         }
     }

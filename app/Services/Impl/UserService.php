@@ -7,6 +7,7 @@ use App\Repository\IUserRepository;
 use App\Services\IUserService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 
 class UserService implements IUserService
@@ -27,5 +28,13 @@ class UserService implements IUserService
     public function getCurrentUser(Request $request): User
     {
         return $request->user();
+    }
+
+    public function getUsers(): Collection{
+        return $this->UserRepository->getUsers(['user', 'owner']);
+    }
+
+    public function upRole(string $userId): User{
+        return $this->UserRepository->upRole($userId);
     }
 }

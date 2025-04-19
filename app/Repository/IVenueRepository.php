@@ -58,4 +58,12 @@ interface IVenueRepository
     public function venueForMap(): Collection;
 
     public function getVenueDetail(string $venueId): array;
+
+    /**
+     * Retrieves venues associated with a user ID.
+     *
+     * @param string $userId The user ID.
+     * @return Collection The collection of venues.
+     */
+    public function getVenueByUid(string $userId): Collection;
 }

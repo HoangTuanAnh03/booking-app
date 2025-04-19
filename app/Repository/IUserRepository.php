@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Models\User;
+use Illuminate\Support\Collection;
 
 interface IUserRepository
 {
@@ -55,6 +56,8 @@ interface IUserRepository
      * @return bool Returns true if the user was successfully deleted, false otherwise
      */
     public function delete(string $id): bool;
+    public function getUsers(array $roles): Collection;
+    public function upRole(string $userId): User;
 }
 
 

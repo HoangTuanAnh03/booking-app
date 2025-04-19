@@ -2,11 +2,15 @@
 
 namespace App\Repository\Impl;
 
+use App\Exceptions\ErrorException;
+use App\Exceptions\NotFoundException;
 use App\Models\User;
 use App\Repository\IUserRepository;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use function Symfony\Component\Translation\t;
 
 class UserRepository implements IUserRepository
 {
@@ -158,5 +162,28 @@ class UserRepository implements IUserRepository
         return $user;
     }
 
+    public function getUsers(array $roles): Collection{
+        return User::whereIn('role', $roles)
+            ->select('uuid', 'name', 'email', 'phone_number', 'role')
+            ->get()
+            ->groupBy('role');
+    }
+
+    /**
+     * @throws NotFoundException
+     * @throws ErrorException
+     */
+    public function upRole(string $userId): User{
+        $user = User::where('uuid', $userId)->first();
+        if($user == null){
+            throw new NotFoundException('User not found');
+        }
+
+        if($user->role != 'user'){
+            throw new ErrorException("Only user roles can be upgraded");
+        }
+        $user->update(['role' => 'owner']);
+        return $user;
+    }
 }
 
