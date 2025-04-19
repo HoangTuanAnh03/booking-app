@@ -110,4 +110,8 @@ class VenueService implements IVenueService
     public function getVenueByUid(string $userId): Collection{
         return $this->repository->getVenueByUid($userId);
     }
+
+    public function activateVenue(string $venueId): Venue{
+        return $this->repository->activateVenue($venueId);
+    }
 }

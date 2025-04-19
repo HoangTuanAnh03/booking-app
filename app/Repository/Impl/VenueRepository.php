@@ -2,12 +2,14 @@
 
 namespace App\Repository\Impl;
 
+use App\Exceptions\NotFoundException;
 use App\Models\User;
 use App\Models\Venue;
 use App\Repository\IVenueRepository;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use function Symfony\Component\Translation\t;
 
 class VenueRepository implements IVenueRepository
 {
@@ -153,5 +155,17 @@ class VenueRepository implements IVenueRepository
                 venues.created_at DESC
             ")
             ->get();
+    }
+
+    /**
+     * @throws NotFoundException
+     */
+    public function activateVenue(string $venueId) : Venue{
+        $venue = Venue::where('venue_id', $venueId)->first();
+        if ($venue == null) {
+            throw new NotFoundException('Venue not found.');
+        }
+        $venue->update(['status' => 'active']);
+        return $venue;
     }
 }

@@ -51,4 +51,9 @@ class AdminController extends Controller
     public function getVenueByUid(string $userId): JsonResponse{
         return $this->successResponse($this->venueService->getVenueByUid($userId), "Get Venues successfully");
     }
+
+    public function activateVenue(string $venueId): JsonResponse
+    {
+        return $this->successResponse($this->venueService->activateVenue($venueId));
+    }
 }
