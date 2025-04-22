@@ -16,7 +16,7 @@ return new class extends Migration
             $table->uuid('venue_id');
             $table->foreign('venue_id')->references('venue_id')->on('venues')->onDelete('cascade');
             $table->string('image_url');
-            $table->boolean('is_thumbnail')->default(false);
+            $table->enum('type',['cover','thumbnail','default'])->default('default');
             $table->timestamps();
         });
     }

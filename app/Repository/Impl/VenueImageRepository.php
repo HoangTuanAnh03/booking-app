@@ -13,8 +13,24 @@ class VenueImageRepository implements IVenueImageRepository
         return VenueImage::where('venue_id', $venue_id)->get();
     }
 
+    public function getById(int $id): ?VenueImage
+    {
+        return VenueImage::where('image_id', $id)->first();
+    }
+
+    /**
+     * @throws \Exception
+     */
     public function store(array $data)
     {
+        if (in_array($data['type'], ['cover', 'thumbnail'])) {
+            if (VenueImage::where('venue_id', $data['venue_id'])
+                ->where('type', $data['type'])
+                ->exists()) {
+                return null;
+            }
+        }
+
         return VenueImage::create($data);
     }
 
@@ -23,7 +39,7 @@ class VenueImageRepository implements IVenueImageRepository
         return VenueImage::where('image_id', $image_id)->delete();
     }
 
-    public function updateThumbnail(int $image_id, array $data)
+    public function update(int $image_id, array $data)
     {
         $image = VenueImage::findOrFail($image_id);
         $image->update($data);

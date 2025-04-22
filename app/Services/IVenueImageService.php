@@ -9,5 +9,5 @@ interface IVenueImageService
     public function getAllByVenueId(string $venue_id): Collection;
     public function store(array $data);
     public function destroy(int $image_id): bool;
-    public function updateThumbnail(int $image_id, array $data);
+    public function update(int $image_id, array $data);
 }

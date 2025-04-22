@@ -89,7 +89,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/venue-images/{venue_id}', [VenueImageController::class, 'getImagesByVenue']);
     Route::post('/venue-images/{venue_id}', [VenueImageController::class, 'store']);
     Route::delete('/venue-images/{image_id}', [VenueImageController::class, 'destroy']);
-    Route::put('/venue-images/{image_id}/thumbnail', [VenueImageController::class, 'updateThumbnail']);
+    Route::put('/venue-images/{image_id}', [VenueImageController::class, 'update']);
 });
 
 // Payment routes

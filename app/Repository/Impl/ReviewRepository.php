@@ -1,10 +1,9 @@
 <?php
 namespace App\Repository\Impl;
 
-use App\Models\LocationService;
 use App\Models\Review;
-use App\Repository\ILocationServiceRepository;
 use App\Repository\IReviewRepository;
+use App\Models\Venue;
 
 class ReviewRepository implements IReviewRepository
 {
@@ -18,7 +17,40 @@ class ReviewRepository implements IReviewRepository
     }
 
     public function store(array $data) {
-        return Review::create($data);
+        $userId = $data['user_id'];
+        $venueId = $data['venue_id'];
+
+        $hasBookedVenue = Venue::join('fields', 'fields.venue_id', '=', 'venues.venue_id')
+            ->join('courts', 'courts.field_id', '=', 'fields.field_id')
+            ->join('booking_courts', 'booking_courts.court_id', '=', 'courts.court_id')
+            ->join('booking', 'booking.booking_id', '=', 'booking_courts.booking_id')
+            ->where('booking.user_id', $userId)
+            ->exists();
+
+        $hasReviewVenue = Review::where('venue_id', $venueId)
+            ->where('user_id', $userId)
+            ->exists();
+
+        if (!$hasBookedVenue) {
+            return [
+                'status' => 'error',
+                'message' => 'You must book the venue before leaving a review.',
+                'code' => 400
+            ];
+        }
+
+        if ($hasReviewVenue) {
+            return [
+                'status' => 'error',
+                'message' => 'You have already reviewed this venue.',
+                'code' => 400
+            ];
+        }
+
+        return [
+            'status' => 'success',
+            'data' => Review::create($data)
+        ];
     }
 
 

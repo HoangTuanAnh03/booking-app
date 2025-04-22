@@ -42,10 +42,13 @@ class ReviewController extends Controller
      */
     public function store(ReviewRequest $request):JsonResponse
     {
+        $data = $this->reviewService->add($request);
+        if ($data['status'] == 'error') {
+            return $this->errorResponse($data['message'], $data['code']);
+        }
         return $this->successResponse(
-            $this->reviewService->add($request),
-            "Saved Field"
-        );
+                $data['data'],
+                "Saved Field");
     }
 
 

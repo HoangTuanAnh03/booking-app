@@ -23,15 +23,9 @@ class ReviewService implements IReviewService
         return $this->repository->getById($id);
     }
 
-    /**
-     * @throws ForbiddenException
-     */
-    public function add(ReviewRequest $request): Review {
+    public function add(ReviewRequest $request): array {
         $venue_id = $request->get('venue_id');
         $user_id = $request->user()->uuid;
-        if ($this->repository->checkReviewOfUserInVenue($user_id,$venue_id)) {
-            throw new ForbiddenException();
-        }
         $data = [
             'venue_id' => $venue_id,
             'user_id' => $user_id,

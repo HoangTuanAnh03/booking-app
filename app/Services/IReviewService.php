@@ -33,9 +33,9 @@ interface IReviewService
      * Create and store a new Review.
      *
      * @param ReviewRequest $request The validated request data
-     * @return Review The created Review
+     * @return array The created Review
      */
-    public function add(ReviewRequest $request): Review;
+    public function add(ReviewRequest $request): array;
 
 
     /**

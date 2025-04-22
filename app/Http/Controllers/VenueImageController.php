@@ -52,12 +52,16 @@ class VenueImageController extends Controller
      */
     public function store(VenueImageRequest $request, string $venue_id): JsonResponse
     {
-        $this->authorize('store', VenueImage::class);
+        $this->authorize('store', [VenueImage::class, $venue_id]);
 
         $data = $request->validated();
         $data['venue_id'] = $venue_id;
 
         $image = $this->venueImageService->store($data);
+
+        if (!$image) {
+            return $this->errorResponse("Venue already has a {$data['type']} image.", 422);
+        }
 
         return $this->successResponse($image, 'Venue Image Uploaded Successfully');
     }
@@ -79,25 +83,17 @@ class VenueImageController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
      * @throws AuthorizationException
      */
-    public function updateThumbnail(VenueImageRequest $request, int $image_id): JsonResponse
+    public function update(VenueImageRequest $request, int $image_id): JsonResponse
     {
-        $this->authorize('updateThumbnail', [VenueImage::class, $image_id]);
+        $this->authorize('update', [VenueImage::class, $image_id]);
 
-        $data = $request->only('is_thumbnail');
+        $data = $request->only('image_url');
 
-        $image = $this->venueImageService->updateThumbnail($image_id, $data);
+        $image = $this->venueImageService->update($image_id, $data);
 
-        return $this->successResponse($image, 'Updated thumbnail status successfully.');
+        return $this->successResponse($image, 'Updated type status successfully.');
     }
 
     /**
@@ -106,7 +102,7 @@ class VenueImageController extends Controller
      */
     public function destroy(int $image_id): JsonResponse
     {
-        $this->authorize('delete', VenueImage::class);
+        $this->authorize('delete', [VenueImage::class, $image_id]);
 
         $success = $this->venueImageService->destroy($image_id);
         if (!$success) {

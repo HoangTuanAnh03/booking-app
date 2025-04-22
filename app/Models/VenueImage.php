@@ -12,9 +12,9 @@ class VenueImage extends Model
     protected $primaryKey = 'image_id';
 
     protected $fillable = [
-        
+
         'venue_id',
         'image_url',
-        'is_thumbnail',
+        'type',
     ];
 }

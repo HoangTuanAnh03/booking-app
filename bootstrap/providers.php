@@ -15,6 +15,7 @@ return [
     App\Providers\ReviewProvider::class,
     App\Providers\SportTypeProvider::class,
     App\Providers\UserServiceProvider::class,
+    App\Providers\VenueImageProvider::class,
     App\Providers\VenuePaymentProvider::class,
     App\Providers\VenueProvider::class,
 ];

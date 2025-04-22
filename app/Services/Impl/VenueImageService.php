@@ -30,8 +30,8 @@ class VenueImageService implements IVenueImageService
         return $this->repository->delete($image_id);
     }
 
-    public function updateThumbnail(int $image_id, array $data)
+    public function update(int $image_id, array $data)
     {
-        return $this->repository->updateThumbnail($image_id, $data);
+        return $this->repository->update($image_id, $data);
     }
 }

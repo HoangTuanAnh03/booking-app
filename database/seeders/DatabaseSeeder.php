@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             ReviewsTableSeeder::class,
             FieldPriceSeeder::class,
             CourtSeeder::class,
+            VenueImagesTableSeeder::class
         ]);
     }
 }

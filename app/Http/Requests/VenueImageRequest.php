@@ -23,10 +23,19 @@ class VenueImageRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'image_url' => $this->isMethod('post') ? 'required|url' : 'nullable',
-            'is_thumbnail' => 'boolean',
-        ];
+        $rules = [];
+        if($this->isMethod('post')){
+            $rules = [
+                'image_url' =>'required|url',
+                'type' => 'required|string|in:cover,thumbnail,default',
+            ];
+        }
+        else{
+            $rules = [
+                'image_url' => 'nullable|url',
+            ];
+        }
+        return $rules;
     }
 
     public function failedValidation(Validator $validator) {
