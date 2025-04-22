@@ -25,6 +25,7 @@ class ReviewRepository implements IReviewRepository
             ->join('booking_courts', 'booking_courts.court_id', '=', 'courts.court_id')
             ->join('booking', 'booking.booking_id', '=', 'booking_courts.booking_id')
             ->where('booking.user_id', $userId)
+            ->where('venues.venue_id', $venueId)
             ->exists();
 
         $hasReviewVenue = Review::where('venue_id', $venueId)
