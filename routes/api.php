@@ -104,10 +104,12 @@ Route::middleware(['auth:sanctum', 'ability:owner'])->group(function () {
 Route::prefix('court')->group(function () {
     Route::get('/', [CourtController::class, 'index']);
     Route::get('/{court_id}', [CourtController::class, 'findById']);
+    Route::get('/getByField/{fieldId}', [FieldController::class, 'getCourtsByFieldAndDate']);
     Route::middleware(['auth:sanctum', 'ability:owner'])->group(function () {
         Route::post('/', [CourtController::class, 'store']);
         Route::put('/{court_id}', [CourtController::class, 'update']);
         Route::delete('/{court_id}', [CourtController::class, 'delete']);
+        Route::post('/createSpecialTimes', [CourtController::class, 'createSpecialTimes']);
     });
 });
 

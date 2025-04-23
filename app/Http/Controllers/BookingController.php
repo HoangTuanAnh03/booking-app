@@ -7,8 +7,10 @@ use App\Http\Requests\CourtLockingRequest;
 use App\Http\Requests\CourtSlotCheckingRequest;
 use App\Services\IBookingService;
 use App\Traits\ApiResponse;
+use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class BookingController extends Controller
 {
@@ -27,7 +29,18 @@ class BookingController extends Controller
      */
     public function store(BookingRequest $request): JsonResponse
     {
-        return $this->successResponse($this->bookingService->createBooking($request), "Booking created successfully");
+        $fieldId = $request->input('field_id');
+        $lockKey = "booking_lock:field:$fieldId";
+
+        try {
+            return Cache::lock($lockKey, 10)->block(5, function () use ($request) {
+                $result = $this->bookingService->createBooking($request);
+                return $this->successResponse($result, "Booking created successfully");
+            });
+        }catch (LockTimeoutException $e) {
+            return $this->errorResponse("Booking error", $e->getCode());
+        }
+//        return $this->successResponse($this->bookingService->createBooking($request), "Booking created successfully");
     }
 
     /**

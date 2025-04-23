@@ -77,4 +77,24 @@ class FieldController extends Controller
         }
         return $this->successResponse($data, "Deleted Field by ID");
     }
+
+
+    /**
+     * Retrieves courts for a specific field and date.
+     *
+     * @param Request $request The HTTP request object containing the date.
+     * @param string $fieldId The field ID.
+     * @return JsonResponse The response with the list of courts or an error message.
+     */
+    public function getCourtsByFieldAndDate(Request $request, string $fieldId): JsonResponse
+    {
+        try {
+            $request->validate([
+                'date' => ['required', 'date_format:Y-m-d'],
+            ]);
+            return $this->successResponse($this->fieldService->getCourtsByFieldAndDate($fieldId, $request->input('date')));
+        }catch (\Exception $exception){
+            return $this->errorResponse("ERROR", 500);
+        }
+    }
 }

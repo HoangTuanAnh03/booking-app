@@ -3,6 +3,7 @@
 namespace App\Services\Impl;
 
 use App\Http\Requests\CourtRequest;
+use App\Http\Requests\CourtSpecialTimeRequest;
 use App\Models\Court;
 use App\Repository\ICourtRepository;
 use App\Services\ICourtService;
@@ -45,5 +46,10 @@ class CourtService implements ICourtService
 
     public function delete(string $id): ?Court {
         return $this->repository->delete($id);
+    }
+
+    public function createSpecialTimes(CourtSpecialTimeRequest $request): array{
+
+        return $this->repository->createSpecialTimes($request);
     }
 }

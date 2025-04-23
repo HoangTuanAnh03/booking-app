@@ -50,4 +50,19 @@ class Field extends Model
     {
         return $this->hasMany(Booking::class, 'field_id', 'field_id');
     }
+
+    public function venue(): BelongsTo
+    {
+        return $this->belongsTo(Venue::class, 'venue_id', 'venue_id');
+    }
+
+    public function prices(): HasMany
+    {
+        return $this->hasMany(FieldPrice::class, 'field_id', 'field_id');
+    }
+
+    public function openingHours(): HasMany
+    {
+        return $this->hasMany(FieldOpeningHours::class, 'field_id', 'field_id');
+    }
 }

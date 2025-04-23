@@ -45,4 +45,13 @@ interface ICourtSlotRepository
      * @return bool True if the slot exists, false otherwise.
      */
     public function courtSlotExists(string $courtId, string $startTime, string $endTime, string $date): bool;
+
+    /**
+     * Retrieves locked court slots for a specific date and court IDs.
+     *
+     * @param string $date The date in Y-m-d format.
+     * @param array $courtIds The array of court IDs.
+     * @return array The list of locked court slots.
+     */
+    public function getLockedCourtSlotsByDateAndCourts(string $date, array $courtIds): array;
 }

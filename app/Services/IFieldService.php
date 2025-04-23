@@ -53,4 +53,13 @@ interface IFieldService
      * @return Field|null The deleted Field or null if not found
      */
     public function delete(string $id, Request  $request): ?Field;
+
+    /**
+     * Retrieves courts for a specific field and date.
+     *
+     * @param string $fieldId The field ID.
+     * @param string $date The date in Y-m-d format.
+     * @return array The list of courts.
+     */
+    public function getCourtsByFieldAndDate(string $fieldId, string $date): array;
 }

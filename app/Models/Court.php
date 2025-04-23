@@ -30,5 +30,8 @@ class Court extends Model
     {
         return $this->hasMany(CourtSlot::class, 'court_id', 'court_id');
     }
-
+    public function slots(): HasMany
+    {
+        return $this->hasMany(CourtSlot::class, 'court_id', 'court_id');
+    }
 }

@@ -9,6 +9,8 @@ use App\Http\Requests\BookingRequest;
 use App\Http\Requests\CourtLockingRequest;
 use App\Http\Requests\CourtSlotCheckingRequest;
 use App\Mail\PaymentNotificationEmail;
+use App\Models\CourtSpecialTime;
+use App\Models\Field;
 use App\Models\Venue;
 use App\Repository\IBookingCourtRepository;
 use App\Repository\IBookingRepository;
@@ -36,7 +38,9 @@ class BookingService implements IBookingService
     private IUserRepository $userRepository;
     private IBookingCourtRepository $bookingCourtRepository;
     private ICourtRepository $courtRepository;
-    public function __construct(IbookingRepository $bookingRepository, ICourtSlotRepository $courtSlotRepository, IFieldRepository $fieldRepository, IVenueRepository $venueRepository, IPaymentRepository $paymentRepository, IUserRepository $userRepository, IBookingCourtRepository $bookingCourtRepository, ICourtRepository $courtRepository){
+
+    public function __construct(IbookingRepository $bookingRepository, ICourtSlotRepository $courtSlotRepository, IFieldRepository $fieldRepository, IVenueRepository $venueRepository, IPaymentRepository $paymentRepository, IUserRepository $userRepository, IBookingCourtRepository $bookingCourtRepository, ICourtRepository $courtRepository)
+    {
         $this->repository = $bookingRepository;
         $this->courtSlotRepository = $courtSlotRepository;
         $this->paymentRepository = $paymentRepository;
@@ -55,23 +59,29 @@ class BookingService implements IBookingService
         $dayOfWeek = $bookingDate->format('l');
 
         return DB::transaction(function () use ($data, $dayOfWeek, $bookingDate) {
+            $field = null;
             $totalPrice = 0;
             $validatedSlots = [];
 
+            $courtSpecialTimes = CourtSpecialTime::whereIn('court_id', array_keys($data['court']))
+                ->where('date', $bookingDate->format('Y-m-d'))
+                ->get()
+                ->groupBy('court_id')
+                ->map(fn($courtTimes) => $courtTimes->keyBy('start_time'));
+
             foreach ($data['court'] as $courtId => $timeSlots) {
+                $courtSpecialTime = $courtSpecialTimes->get($courtId, collect());
                 foreach ($timeSlots as $slot) {
                     $startTime = $this->toCarbonTime('H:i', $slot['start_time']);
                     $endTime = $this->toCarbonTime('H:i', $slot['end_time']);
 
-                    $bookingDateTimeEnd = $bookingDate->copy()
-                        ->setTimeFrom($endTime);
-//                    Log::info("date   ", [$bookingDateTimeEnd]);
-//                    Log::info("start time ", [now()]);
+                    $bookingDateTimeEnd = $bookingDate->copy()->setTimeFrom($endTime);
                     if ($bookingDateTimeEnd->lt(now()->addMinutes(30))) {
                         throw new ErrorException("Cannot book a court that ends in the past (End time: {$bookingDateTimeEnd->format('Y-m-d H:i:s')})");
                     }
+
                     $duration = $startTime->diffInMinutes($endTime);
-                    if($duration <= 0){
+                    if ($duration <= 0) {
                         throw new ErrorException("$startTime after $endTime ??????");
                     }
 
@@ -81,46 +91,61 @@ class BookingService implements IBookingService
                         'start_time' => $startTime->format('H:i:s'),
                         'end_time' => $endTime->format('H:i:s')
                     ];
-                    if ($this->courtSlotRepository->checkCourtSlotLock(
-                        $courtSlotCheck
-                    )) {
+
+                    if ($this->courtSlotRepository->checkCourtSlotLock($courtSlotCheck)) {
                         throw new ErrorException("The requested time slot for court $courtId is already booked or locked by the owner.");
                     }
 
-                    $fieldPrice = $this->repository->findFieldPrice(
-                        $data['field_id'],
-                        $dayOfWeek,
-                        $startTime->format('H:i:s'),
-                        $endTime->format('H:i:s')
-                    );
+                    // Khung giờ được ghép
+                    if ($courtSpecialTime->has($startTime->format('H:i:s'))) {
+                        $courtSpecialTimeData = $courtSpecialTime->get($startTime->format('H:i:s'));
+                        if ($courtSpecialTimeData->end_time != $endTime->format('H:i:s')) {
+                            throw new ErrorException("Time period mismatch");
+                        }
+                        $minRental = $courtSpecialTimeData->min_rental;
+                        $price = $courtSpecialTimeData->price;
+                    } else {
+                        // Tìm field price
+                        $fieldPrice = $this->repository->findFieldPrice(
+                            $data['field_id'],
+                            $dayOfWeek,
+                            $startTime->format('H:i:s'),
+                            $endTime->format('H:i:s')
+                        );
 
-                    if (!$fieldPrice) {
-                        throw new ErrorException("No pricing found for $dayOfWeek, {$startTime->format('H:i:s')} - {$endTime->format('H:i:s')}");
+                        // Tồn tại trong field price
+                        if ($fieldPrice) {
+
+                            $price = $fieldPrice->price;
+                            $minRental = $fieldPrice->min_rental;
+                            $fieldStartTime = $this->toCarbonTime('H:i:s', $fieldPrice->start_time);
+                            $fieldEndTime = $this->toCarbonTime('H:i:s', $fieldPrice->end_time);
+
+                        } else {
+                            // Không tồn tại trong field price => default price / 30p
+                            $field = $field ?? Field::findOrFail($data['field_id']);
+
+                            $fieldOpeningHours = DB::table('field_opening_hours')
+                                ->where('field_id', $data['field_id'])
+                                ->where('day_of_week', $bookingDate->format('l')) // Lấy ngày trong tuần
+                                ->first();
+
+                            if (!$fieldOpeningHours) {
+                                throw new ErrorException("Field opening hours not found for the selected day.");
+                            }
+
+                            $fieldStartTime = $this->toCarbonTime('H:i:s', $fieldOpeningHours->start_time);
+                            $fieldEndTime = $this->toCarbonTime('H:i:s', $fieldOpeningHours->end_time);
+
+                            $price = $field->default_price;
+                            $minRental = 30;
+
+                        }
+                        $this->checkRentalConditions($startTime, $endTime, $minRental, $fieldStartTime, $fieldEndTime);
                     }
 
-                    if ($duration % $fieldPrice->min_rental !== 0) {
-                        throw new ErrorException("Duration $duration minutes is not divisible by min_rental $fieldPrice->min_rental");
-                    }
-
-                    $fieldStartTime = $this->toCarbonTime('H:i:s', $fieldPrice->start_time);
-                    $gapToStart = $startTime->diffInMinutes($fieldStartTime);
-                    if ($gapToStart % $fieldPrice->min_rental !== 0) {
-                        throw new ErrorException("Gap from $fieldPrice->start_time to {$startTime->format('H:i:s')} is not divisible by min_rental");
-                    }
-
-                    $fieldEndTime = $this->toCarbonTime('H:i:s', $fieldPrice->end_time);
-                    $gapToEnd = $fieldEndTime->diffInMinutes($endTime);
-                    if ($gapToEnd % $fieldPrice->min_rental !== 0) {
-                        throw new ErrorException("Remaining gap from {$endTime->format('H:i:s')} to $fieldPrice->end_time is not divisible by min_rental");
-                    }
-
-//                    if ($this->repository->checkCourtSlotOverlap($courtId, $startTime->format('H:i:s'), $endTime->format('H:i:s'))) {
-//                        throw new ErrorException("Time slot conflict for court $courtId: {$startTime->format('H:i:s')} - {$endTime->format('H:i:s')}");
-//                    }
-
-                    $slotPrice = ($duration / $fieldPrice->min_rental) * $fieldPrice->price;
+                    $slotPrice = ($duration / $minRental) * $price;
                     $totalPrice += $slotPrice;
-
                     $validatedSlots[] = [
                         'court_id' => $courtId,
                         'start_time' => $startTime->format('H:i:s'),
@@ -128,11 +153,10 @@ class BookingService implements IBookingService
                         'price' => $slotPrice,
                         'start_carbon' => $startTime,
                         'end_carbon' => $endTime,
-                        'min_rental' => $fieldPrice->min_rental,
+                        'min_rental' => $minRental,
                     ];
                 }
             }
-
 
             // Create booking
             $booking = $this->repository->createBooking([
@@ -167,7 +191,6 @@ class BookingService implements IBookingService
                         'is_looked' => true,
                         'locked_by_owner' => false,
                     ];
-//                    Log::info('data save', [$dataSave]);
                     $this->courtSlotRepository->createCourtSlot($dataSave);
                     $currentTime = $nextTime;
                 }
@@ -191,6 +214,35 @@ class BookingService implements IBookingService
     }
 
     /**
+     * @throws ErrorException
+     */
+    private function checkRentalConditions($startTime, $endTime, $minRental, $fieldStartTime = null, $fieldEndTime = null): void
+    {
+        $duration = $startTime->diffInMinutes($endTime);
+
+        // Kiểm tra nếu duration không chia hết cho min_rental
+        if ($duration % $minRental !== 0) {
+            throw new ErrorException("Duration $duration minutes is not divisible by min_rental $minRental");
+        }
+
+        // Kiểm tra gap từ start time đến field start time
+        if ($fieldStartTime && $startTime) {
+            $gapToStart = $startTime->diffInMinutes($fieldStartTime);
+            if ($gapToStart % $minRental !== 0) {
+                throw new ErrorException("Gap from {$fieldStartTime->format('H:i:s')} to {$startTime->format('H:i:s')} is not divisible by min_rental");
+            }
+        }
+
+        // Kiểm tra gap từ end time đến field end time
+        if ($fieldEndTime && $endTime) {
+            $gapToEnd = $fieldEndTime->diffInMinutes($endTime);
+            if ($gapToEnd % $minRental !== 0) {
+                throw new ErrorException("Remaining gap from {$endTime->format('H:i:s')} to {$fieldEndTime->format('H:i:s')} is not divisible by min_rental");
+            }
+        }
+    }
+
+    /**
      * @throws NotFoundException
      * @throws UnauthorizedException
      * @throws ErrorException
@@ -201,14 +253,14 @@ class BookingService implements IBookingService
         if (!$booking) {
             throw new NotFoundException("Booking not found");
         }
-        if($booking->user_id !== $request->user()->uuid) {
+        if ($booking->user_id !== $request->user()->uuid) {
             throw new UnauthorizedException("You don't have access to this page");
         }
-        if($booking->created_at < now()->subMinutes(30) && $booking->status !== 'completed'){
+        if ($booking->created_at < now()->subMinutes(30) && $booking->status !== 'completed') {
             $booking->update(['status' => 'cancelled']);
             throw new ErrorException("Payment is overdue");
         }
-        if($booking->status == 'confirmed'){
+        if ($booking->status == 'confirmed') {
             throw new ErrorException("Booking has been confirmed before");
         }
         $field = $this->fieldRepository->getById($booking->field_id);
@@ -244,7 +296,7 @@ class BookingService implements IBookingService
 
     private function sendPaymentEmail(string $email, string $customerName, string $customerPhone, string $fieldName, string $venueName, string $price, string $message_data, string $date, Collection $group): void
     {
-        Mail::to($email)->send(new PaymentNotificationEmail($customerName, $customerPhone, $fieldName, $venueName, $price, $message_data , $date, $group));
+        Mail::to($email)->send(new PaymentNotificationEmail($customerName, $customerPhone, $fieldName, $venueName, $price, $message_data, $date, $group));
     }
 
     /**
@@ -258,7 +310,7 @@ class BookingService implements IBookingService
             throw new NotFoundException("Booking not found");
         }
 
-        if($request->user()->uuid !== $this->fieldRepository->getOwnerId($booking->field_id)) {
+        if ($request->user()->uuid !== $this->fieldRepository->getOwnerId($booking->field_id)) {
             throw new UnauthorizedException("You don't have access to this page");
         }
         $booking->update(["status" => "completed"]);
@@ -280,20 +332,20 @@ class BookingService implements IBookingService
         $ownerId = $this->fieldRepository->getOwnerId($booking->field_id);
         $uid = $request->user()->uuid;
         $bookingUserId = $booking->user_id;
-        if($bookingUserId !== $uid && $ownerId !== $uid) {
+        if ($bookingUserId !== $uid && $ownerId !== $uid) {
             throw new UnauthorizedException("You don't have access to this page");
         }
-        if($booking->status !== 'pending') {
-                throw new ErrorException("Booking cannot be canceled");
+        if ($booking->status !== 'pending') {
+            throw new ErrorException("Booking cannot be canceled");
         }
-        try{
+        try {
             DB::transaction(function () use ($bookingId, $booking) {
                 $booking->update(["status" => "cancelled"]);
                 $this->paymentRepository->update($bookingId, ["status" => "failed"]);
                 $this->courtSlotRepository->deleteCourtSlotsByBookingId($bookingId);
             });
             return "Booking has been cancelled";
-        }catch (ErrorException $e){
+        } catch (ErrorException $e) {
             throw new ErrorException("booking cannot be cancelled");
         }
     }
@@ -312,21 +364,22 @@ class BookingService implements IBookingService
     /**
      * @throws UnauthorizedException
      */
-    public function lock(CourtLockingRequest $request): array{
+    public function lock(CourtLockingRequest $request): array
+    {
         $userId = $request->user()->uuid;
         $ownerId = $this->fieldRepository->getOwnerId($request['field_id']);
 
-        if($ownerId !== $userId){
+        if ($ownerId !== $userId) {
             throw new UnauthorizedException("You don't have access to this page");
         }
         $data = $request->validated();
-        return DB::transaction(function () use ($data){
+        return DB::transaction(function () use ($data) {
             foreach ($data['court'] as $courtId => $timeSlots) {
                 foreach ($timeSlots as $slot) {
                     $startTime = $this->toCarbonTime('H:i', $slot['start_time']);
                     $endTime = $this->toCarbonTime('H:i', $slot['end_time']);
                     $duration = $startTime->diffInMinutes($endTime);
-                    if($duration <= 0){
+                    if ($duration <= 0) {
                         throw new ErrorException("$startTime after $endTime ??????");
                     }
                     $dataSave = [
@@ -337,12 +390,12 @@ class BookingService implements IBookingService
                         'date' => $data['date'],
                         'locked_by_owner' => true,
                     ];
-                    if(!$this->courtSlotRepository->courtSlotExists(
+                    if (!$this->courtSlotRepository->courtSlotExists(
                         $dataSave['court_id'],
                         $dataSave['start_time'],
                         $dataSave['end_time'],
                         $dataSave['date'],
-                    )){
+                    )) {
                         $this->courtSlotRepository->createCourtSlot($dataSave);
                     }
                 }
@@ -435,13 +488,11 @@ class BookingService implements IBookingService
             $mappedBookings[] = [
                 'booking_id' => $booking->booking_id,
                 'field_id' => $booking->field_id,
-//                'user_id' => $booking->user_id,
                 'booking_date' => Carbon::parse($booking->booking_date)->format('Y-m-d'),
                 'total_price' => number_format($booking->total_price, 2),
                 'customer_name' => $booking->customer_name,
                 'customer_phone' => $booking->customer_phone,
                 'status' => $booking->status,
-//                'created_at' => $booking->created_at->format('Y-m-d H:i:s'),
                 'courts' => $courts,
             ];
         }
@@ -464,38 +515,31 @@ class BookingService implements IBookingService
      * @throws UnauthorizedException
      * @throws ErrorException
      */
-    public function getPaymentQRCode(Request $request, $bookingId): array{
+    public function getPaymentQRCode(Request $request, $bookingId): array
+    {
         $userId = $request->user()->uuid;
         $booking = $this->repository->findById($bookingId);
-//        Log::info("userId " . $userId);
-        if($booking == null){
+        if ($booking == null) {
             throw new NotFoundException("Booking not found");
         }
-        if($booking->user_id !== $userId){
+        if ($booking->user_id !== $userId) {
             throw new UnauthorizedException("You don't have permission to access this page");
         }
 
-        if($booking->status === 'completed'){
-            throw new ErrorException("Booking already completed");
+        if($booking->status === 'pending'){
+            $field = $this->fieldRepository->getById($booking->field_id);
+            $venue = $this->venueRepository->getById($field->venue_id);
+            return [
+                'booking_id' => $booking->booking_id,
+                'total_price' => $booking->total_price,
+                'bank_name' => $venue->bank_name,
+                'bank_account' => $venue->bank_account_number,
+                'qr_url' => "https://img.vietqr.io/image/$venue->bank_name-$venue->bank_account_number-compact2.jpg?amount=$booking->total_price&addInfo=$booking->booking_id"
+            ];
         }
-
-        if($booking->status === 'cancelled'){
-            throw new ErrorException("Booking already cancelled");
-        }
-
-        if($booking->status === 'confirmed'){
-            throw new ErrorException("Booking already confirmed");
-        }
-        $field = $this->fieldRepository->getById($booking->field_id);
-        $venue = $this->venueRepository->getById($field->venue_id);
-        return [
-            'booking_id' => $booking->booking_id,
-            'total_price' => $booking->total_price,
-            'bank_name' => $venue->bank_name,
-            'bank_account' => $venue->bank_account_number,
-            'qr_url' => "https://img.vietqr.io/image/$venue->bank_name-$venue->bank_account_number-compact2.jpg?amount=$booking->total_price&addInfo=$booking->booking_id"
-        ];
+        throw new ErrorException("Booking already $booking->status");
     }
+
     private function toCarbonTime(string $from, $data): ?Carbon
     {
         return Carbon::createFromFormat($from, $data);

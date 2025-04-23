@@ -87,5 +87,7 @@ class FieldService implements IFieldService
         }
     }
 
-
+    public function getCourtsByFieldAndDate(string $fieldId, string $date): array{
+        return $this->repository->getCourtsByFieldAndDate($fieldId, $date);
+    }
 }

@@ -5,6 +5,7 @@ namespace App\Repository\Impl;
 use App\Exceptions\ErrorException;
 use App\Models\courtSlot;
 use App\Repository\ICourtSlotRepository;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -134,5 +135,44 @@ class CourtSlotRepository implements ICourtSlotRepository
             ->where('start_time', $startTime)
             ->where('end_time', $endTime)
             ->exists();
+    }
+
+    public function getLockedCourtSlotsByDateAndCourts(string $date, array $courtIds): array
+    {
+        $thirtyMinutesAgo = now()->subMinutes(30);
+
+        $query = DB::table('court_slots')
+            ->leftJoin('booking_courts', 'court_slots.booking_court_id', '=', 'booking_courts.booking_court_id')
+            ->leftJoin('booking', 'booking_courts.booking_id', '=', 'booking.booking_id')
+            ->whereDate('court_slots.date', $date)
+            ->whereIn('court_slots.court_id', $courtIds)
+            ->where(function ($q) use ($thirtyMinutesAgo) {
+                $q->where('court_slots.locked_by_owner', true)
+                    ->orWhere('booking.status', 'completed')
+                    ->orWhere(function ($subQ) use ($thirtyMinutesAgo) {
+                        $subQ->where('court_slots.is_looked', true)
+                            ->whereIn('booking.status', ['pending', 'confirmed'])
+                            ->where('court_slots.created_at', '>=', $thirtyMinutesAgo);
+                    });
+            })
+            ->select('court_slots.*');
+
+        $slots = $query->get();
+
+        // Cấu trúc kết quả theo [court_id][start_time] => slot_data
+        $grouped = [];
+
+        foreach ($slots as $slot) {
+            $courtId = $slot->court_id;
+            $startTime = Carbon::parse($slot->start_time)->format('H:i');
+
+            if (!isset($grouped[$courtId])) {
+                $grouped[$courtId] = [];
+            }
+
+            $grouped[$courtId][$startTime] = (array) $slot;
+        }
+
+        return $grouped;
     }
 }

@@ -51,5 +51,20 @@ interface IFieldRepository
      */
     public function delete(string $id);
 
+    /**
+     * Retrieves the owner ID for a specific field.
+     *
+     * @param string $fieldId The field ID.
+     * @return mixed The owner ID.
+     */
     public function getOwnerId(string $fieldId);
+
+    /**
+     * Retrieves courts for a specific field and date.
+     *
+     * @param string $fieldId The field ID.
+     * @param string $date The date in Y-m-d format.
+     * @return array The list of courts.
+     */
+    public function getCourtsByFieldAndDate(string $fieldId, string $date): array;
 }
