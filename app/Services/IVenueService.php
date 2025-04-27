@@ -4,6 +4,7 @@ namespace App\Services;
 use App\Http\Requests\PaginatingDataVenueRequest;
 use App\Http\Requests\VenueFormRequest;
 use App\Models\Venue;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
 /**
@@ -87,6 +88,8 @@ interface IVenueService
      */
     public function getVenueByUid(string $userId): Collection;
 
+    public function getVenues(?string $search = null, int $perPage = 10): LengthAwarePaginator;
+
     /**
      * Activates a venue by ID.
      *
@@ -94,4 +97,6 @@ interface IVenueService
      * @return Venue The activated venue object.
      */
     public function activateVenue(string $venueId): Venue;
+
+    public function getVenueStas(): array;
 }

@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Models\Venue;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
@@ -67,6 +68,15 @@ interface IVenueRepository
      * @return Collection The collection of venues.
      */
     public function getVenueByUid(string $userId): Collection;
+
+    /**
+     * Get all venues with optional search and pagination.
+     *
+     * @param string|null $search
+     * @param int $perPage
+     * @return LengthAwarePaginator
+     */
+    public function getVenues(?string $search = null, int $perPage = 10): LengthAwarePaginator;
     /**
      * Activates a venue by ID.
      *
@@ -74,4 +84,6 @@ interface IVenueRepository
      * @return Venue The activated venue object.
      */
     public function activateVenue(string $venueId): Venue;
+
+    public function getVenueStas(): array;
 }

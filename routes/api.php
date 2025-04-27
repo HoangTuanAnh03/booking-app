@@ -176,5 +176,7 @@ Route::prefix('/admin')->group(function () {
         Route::get('/users/{userId}/upRole', [AdminController::class, 'upRole']);
         Route::get('/users/{userId}', [AdminController::class, 'getVenueByUid']);
         Route::get('/venues/{venueId}/activate', [AdminController::class, 'activateVenue']);
+        Route::get('/venues', [AdminController::class, 'getVenues']);
+        Route::get('/dashboard', [AdminController::class, 'dashboard']);
     });
 });

@@ -67,4 +67,6 @@ interface IFieldRepository
      * @return array The list of courts.
      */
     public function getCourtsByFieldAndDate(string $fieldId, string $date): array;
+
+    public function getFieldStas(): array;
 }

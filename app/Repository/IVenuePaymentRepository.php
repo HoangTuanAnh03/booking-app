@@ -43,4 +43,6 @@ interface IVenuePaymentRepository
      * @return Collection|array List of venues.
      */
     public function getAllVenueByOwnerId(string $ownerId): Collection|array;
+
+    public function getTotalRevenue(): array;
 }

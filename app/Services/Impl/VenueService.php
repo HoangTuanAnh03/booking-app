@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Venue;
 use App\Repository\IVenueRepository;
 use App\Services\IVenueService;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -110,8 +111,15 @@ class VenueService implements IVenueService
     public function getVenueByUid(string $userId): Collection{
         return $this->repository->getVenueByUid($userId);
     }
-
+    public function getVenues(?string $search = null, int $perPage = 10): LengthAwarePaginator{
+        return $this->repository->getVenues($search, $perPage);
+    }
     public function activateVenue(string $venueId): Venue{
         return $this->repository->activateVenue($venueId);
+    }
+
+    public function getVenueStas(): array
+    {
+        return $this->repository->getVenueStas();
     }
 }

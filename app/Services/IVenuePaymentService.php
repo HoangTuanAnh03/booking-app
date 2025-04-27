@@ -46,4 +46,6 @@ interface IVenuePaymentService
      * @return void
      */
     public function unpaidVenueLocking(): void;
+
+    public function getTotalRevenue(): array;
 }

@@ -6,6 +6,7 @@ use App\Exceptions\NotFoundException;
 use App\Models\User;
 use App\Models\Venue;
 use App\Repository\IVenueRepository;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -132,21 +133,9 @@ class VenueRepository implements IVenueRepository
         ];
     }
 
-    public function getVenueByUid(string $userId): Collection
+    private function buildVenueQuery($query)
     {
-        if (!Str::isUuid($userId)) {
-            throw new \InvalidArgumentException('Invalid UUID format.');
-        }
-
-        $user = User::where('uuid', $userId)->first();
-        if (!$user) {
-            return collect([]);
-        }
-        if ($user->role !== 'owner') {
-            return collect([]);
-        }
-
-        return Venue::where('venues.owner_id', $userId)
+        return $query
             ->leftJoin('venue_payment', function ($join) {
                 $join->on('venues.venue_id', '=', 'venue_payment.venue_id')
                     ->whereIn('venue_payment.id', function ($query) {
@@ -181,8 +170,38 @@ class VenueRepository implements IVenueRepository
                     ELSE 3
                 END ASC,
                 venues.created_at DESC
-            ")
-            ->get();
+            ");
+    }
+
+    public function getVenueByUid(string $userId): Collection
+    {
+        if (!Str::isUuid($userId)) {
+            throw new \InvalidArgumentException('Invalid UUID format.');
+        }
+
+        $user = User::where('uuid', $userId)->first();
+        if (!$user || $user->role !== 'owner') {
+            return collect([]);
+        }
+
+        $query = Venue::where('venues.owner_id', $userId);
+        $query = $this->buildVenueQuery($query);
+
+        return $query->get();
+    }
+
+
+    public function getVenues(?string $search = null, int $perPage = 10): LengthAwarePaginator
+    {
+        $query = Venue::query();
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('venues.name', 'like', '%' . $search . '%')
+                    ->orWhere('venues.address', 'like', '%' . $search . '%');
+            });
+        }
+        $query = $this->buildVenueQuery($query);
+        return $query->paginate($perPage);
     }
 
     /**
@@ -196,5 +215,20 @@ class VenueRepository implements IVenueRepository
         }
         $venue->update(['status' => 'active']);
         return $venue;
+    }
+
+    public function getVenueStas(): array
+    {
+        $venueCountsByStatus = Venue::select('status')
+            ->groupBy('status')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [$item->status => Venue::where('status', $item->status)->count()];
+            });
+
+        $allStatuses = ['active', 'locked', 'banned'];
+        return collect($allStatuses)->mapWithKeys(function ($status) use ($venueCountsByStatus) {
+            return [$status => $venueCountsByStatus->get($status, 0)];
+        })->all();
     }
 }

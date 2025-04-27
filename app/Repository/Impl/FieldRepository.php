@@ -7,6 +7,7 @@ use App\Exceptions\NotFoundException;
 use App\Models\Court;
 use App\Models\CourtSpecialTime;
 use App\Models\Field;
+use App\Models\SportType;
 use App\Repository\ICourtSlotRepository;
 use App\Repository\IFieldRepository;
 use Illuminate\Support\Carbon;
@@ -191,15 +192,17 @@ class FieldRepository implements IFieldRepository
             ->groupBy('court_id')
             ->map(fn($courtTimes) => $courtTimes->keyBy('start_time'));
     }
+
     private function generateCourtTimeSlots(
         Collection $courts,
-        Field $field,
-        Carbon $openingTime,
-        Carbon $closingTime,
-        Carbon $date,
-        array $courtSlotsLocked,
+        Field      $field,
+        Carbon     $openingTime,
+        Carbon     $closingTime,
+        Carbon     $date,
+        array      $courtSlotsLocked,
         Collection $courtSpecialTimes
-    ): array {
+    ): array
+    {
         $result = [];
         foreach ($courts as $court) {
             $specialTimes = $courtSpecialTimes->get($court->court_id, collect());
@@ -213,6 +216,7 @@ class FieldRepository implements IFieldRepository
         }
         return $result;
     }
+
     private function generateTimeSlots($field, Carbon $openingTime, Carbon $closingTime, Carbon $date, $courtSlots, Collection $specialTimes = null): Collection
     {
         $timeSlots = collect();
@@ -263,17 +267,18 @@ class FieldRepository implements IFieldRepository
     }
 
     private function generateSlotsForRange(
-        Collection $timeSlots,
-        Carbon $start,
-        Carbon $end,
-        float $defaultPrice,
-        int $defaultMinRental,
-        bool $isToday,
-        Carbon $now,
-        array $courtSlots,
+        Collection  $timeSlots,
+        Carbon      $start,
+        Carbon      $end,
+        float       $defaultPrice,
+        int         $defaultMinRental,
+        bool        $isToday,
+        Carbon      $now,
+        array       $courtSlots,
         ?Collection $specialTimes,
-        Carbon $closingTime
-    ): void {
+        Carbon      $closingTime
+    ): void
+    {
         $current = $start->copy();
 
         while ($current->lt($end)) {
@@ -346,6 +351,18 @@ class FieldRepository implements IFieldRepository
             'price' => $price,
             'status' => $status,
             'min_rental' => $minRental,
+        ];
+    }
+
+    public function getFieldStas(): array
+    {
+        $count = Field::distinct('sport_type_id')->count('sport_type_id');
+        $sports = SportType::select('name')
+            ->withCount('fields')
+            ->get();
+        return [
+            'count' => $count,
+            'detail' => $sports,
         ];
     }
 }

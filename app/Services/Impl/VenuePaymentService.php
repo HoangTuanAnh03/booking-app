@@ -154,6 +154,10 @@ class VenuePaymentService implements IVenuePaymentService
         }
     }
 
+    public function getTotalRevenue(): array{
+        return $this->venuePaymentRepository->getTotalRevenue();
+    }
+
     private function sendPaymentRemiderEmail(string $email, string $ownerName, string $venueName): void
     {
         Mail::to($email)->send(new PaymentReminderEmail($ownerName, $venueName));

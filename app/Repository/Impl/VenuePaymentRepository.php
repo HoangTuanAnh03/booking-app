@@ -58,4 +58,33 @@ class VenuePaymentRepository implements IVenuePaymentRepository
 
         return $query->get();
     }
+
+    public function getTotalRevenue(): array
+    {
+        $currentMonth = Carbon::now();
+        $startDate = Carbon::now()->subMonths(2)->startOfMonth();
+        $endDate = $currentMonth->endOfMonth();
+
+        $totalsByMonth = VenuePayment::select(
+            DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month"),
+            DB::raw('SUM(amount) as total_amount')
+        )
+            ->where('status', 'paid')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->groupBy('month')
+            ->orderBy('month', 'asc')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [$item->month => $item->total_amount];
+            });
+
+        $months = [
+            $startDate->format('Y-m'),
+            $startDate->copy()->addMonth()->format('Y-m'),
+            $currentMonth->format('Y-m'),
+        ];
+        return collect($months)->mapWithKeys(function ($month) use ($totalsByMonth) {
+            return [$month => $totalsByMonth->get($month, 0)];
+        })->all();
+    }
 }
