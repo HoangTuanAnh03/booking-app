@@ -17,4 +17,9 @@ class VenueImage extends Model
         'image_url',
         'type',
     ];
+
+    public function venue()
+    {
+        return $this->belongsTo(Venue::class, 'venue_id', 'venue_id');
+    }
 }

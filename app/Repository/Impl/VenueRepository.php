@@ -15,13 +15,27 @@ class VenueRepository implements IVenueRepository
 {
     public function show(array $data)
     {
-        return Venue::when(!empty($data['name']), function ($query) use ($data) {
-            $query->where('name', 'like', '%' . $data['name'] . '%');
-        })
-        ->orderBy($data['sortBy'] ?? 'created_at', $data['sortDirection'] ?? 'desc')
-        ->skip((($data['page'] ?? 1) - 1) * ($data['limit'] ?? 10))
-        ->take($data['limit'] ?? 10)
-        ->get();
+        return Venue::where('status', 'active')
+            ->with('images')
+            ->when(!empty($data['name']), function ($query) use ($data) {
+                $query->where('name', 'like', '%' . $data['name'] . '%');
+            })
+            ->orderBy($data['sortBy'] ?? 'created_at', $data['sortDirection'] ?? 'desc')
+            ->skip((($data['page'] ?? 1) - 1) * ($data['limit'] ?? 10))
+            ->take($data['limit'] ?? 10)
+            ->get()
+            ->map(function ($venue) {
+                $images = $venue->images->groupBy('type');
+                return [
+                    'venue_id' => $venue->venue_id,
+                    'name' => $venue->name,
+                    'address' => $venue->address,
+                    'thumbnail' => $images->has('thumbnail') ? $images['thumbnail']->first()->image_url : null,
+                    'cover' => $images->has('cover') ? $images['cover']->first()->image_url : null,
+                    'created_at' => $venue->created_at,
+                    'updated_at' => $venue->updated_at,
+                ];
+            });
     }
 
     public function getById(string $id)
@@ -52,7 +66,8 @@ class VenueRepository implements IVenueRepository
         return $venue;
     }
 
-    public function venueForMap(): Collection{
+    public function venueForMap(): Collection
+    {
         return Venue::with('fields.sportType')
             ->get()
             ->map(function ($venue) {
@@ -84,7 +99,7 @@ class VenueRepository implements IVenueRepository
 
     public function getVenueDetail(string $venueId): array
     {
-        $venue = Venue::with(['owner', 'fields.openingHourToday'])
+        $venue = Venue::with(['owner', 'fields.openingHourToday', 'images'])
             ->where('venue_id', $venueId)
             ->firstOrFail();
 
@@ -95,6 +110,13 @@ class VenueRepository implements IVenueRepository
         $earliestOpening = $openingHours->min('opening_time');
         $latestClosing = $openingHours->max('closing_time');
 
+        $images = $venue->images->groupBy('type')->mapWithKeys(function ($group, $type) {
+            if ($type !== 'default') {
+                return [$type => $group->first()->image_url ?? null];
+            }
+            return [$type => $group->pluck('image_url')->toArray()];
+        })->toArray();
+
         return [
             'venue_id' => $venue->venue_id,
             'venue_name' => $venue->name,
@@ -102,10 +124,16 @@ class VenueRepository implements IVenueRepository
             'phone_number' => $venue->owner?->phone_number,
             'opening' => $earliestOpening,
             'closing' => $latestClosing,
+            'images' => [
+                'thumbnail' => $images['thumbnail'] ?? null,
+                'cover' => $images['cover'] ?? null,
+                'default' => $images['default'] ?? []
+            ]
         ];
     }
 
-    public function getVenueByUid(string $userId): Collection{
+    public function getVenueByUid(string $userId): Collection
+    {
         if (!Str::isUuid($userId)) {
             throw new \InvalidArgumentException('Invalid UUID format.');
         }
@@ -160,7 +188,8 @@ class VenueRepository implements IVenueRepository
     /**
      * @throws NotFoundException
      */
-    public function activateVenue(string $venueId) : Venue{
+    public function activateVenue(string $venueId): Venue
+    {
         $venue = Venue::where('venue_id', $venueId)->first();
         if ($venue == null) {
             throw new NotFoundException('Venue not found.');

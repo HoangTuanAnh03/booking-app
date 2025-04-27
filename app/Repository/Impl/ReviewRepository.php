@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Repository\Impl;
 
 use App\Models\Review;
@@ -7,16 +8,23 @@ use App\Models\Venue;
 
 class ReviewRepository implements IReviewRepository
 {
-    public function show(int $perPage, string $id) {
+    public function show(int $perPage, string $id)
+    {
 
-        return Review::where('venue_id', $id)->paginate($perPage);
+        return Review::where('venue_id', $id)
+            ->with(['user' => function ($query) {
+                $query->select('uuid', 'name');
+            }])
+            ->paginate($perPage);
     }
 
-    public function getById(int $id) {
+    public function getById(int $id)
+    {
         return Review::where('review_id', $id)->first();
     }
 
-    public function store(array $data) {
+    public function store(array $data)
+    {
         $userId = $data['user_id'];
         $venueId = $data['venue_id'];
 
@@ -55,7 +63,8 @@ class ReviewRepository implements IReviewRepository
     }
 
 
-    public function delete(int $id) {
+    public function delete(int $id)
+    {
         $Review = Review::where('review_id', $id)->first();
         if (!$Review) return null;
 
