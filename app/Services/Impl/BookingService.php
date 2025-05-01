@@ -208,6 +208,8 @@ class BookingService implements IBookingService
             return [
                 'booking_id' => $booking,
                 'total_price' => $totalPrice,
+                'bank_name' => $venue->bank_name,
+                'bank_account' => $venue->bank_account_number,
                 'qr_url' => "https://img.vietqr.io/image/$venue->bank_name-$venue->bank_account_number-compact2.jpg?amount=$totalPrice&addInfo=$booking"
             ];
         });

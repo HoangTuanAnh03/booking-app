@@ -31,9 +31,17 @@ class FieldRepository implements IFieldRepository
     public function show(int $perPage, string $id)
     {
 
-        return Field::with('openingHourToday')
+        $fields = Field::with('openingHourToday')
             ->where('venue_id', $id)
             ->paginate($perPage);
+
+        $sortedFields = $fields->getCollection()->sortByDesc(function($field) {
+            return $field->openingHourToday ? 1 : 0;
+        })->values();;
+
+        $fields->setCollection($sortedFields);
+
+        return $fields;
     }
 
     public function getById(string $id)
@@ -80,7 +88,6 @@ class FieldRepository implements IFieldRepository
     {
         $date = $this->parseDate($date);
         $dayOfWeek = $date->format('l');
-
         $field = $this->fetchField($fieldId, $dayOfWeek);
         $openingHours = $this->getOpeningHours($field);
         [$openingTime, $closingTime] = $this->validateOpeningHours($openingHours);
@@ -92,15 +99,20 @@ class FieldRepository implements IFieldRepository
             $courts->pluck('court_id')->toArray()
         );
 
-        return $this->generateCourtTimeSlots(
-            $courts,
-            $field,
-            $openingTime,
-            $closingTime,
-            $date,
-            $courtSlotsLocked,
-            $courtSpecialTimes
-        );
+        $baseTimeLine = $this->generateBaseTimeLine($field, $openingTime, $closingTime, $date);
+        return [
+            'base_time_line' => $baseTimeLine,
+            'courts' => $this->generateCourtTimeSlots(
+                $courts,
+                $field,
+                $openingTime,
+                $closingTime,
+                $date,
+                $courtSlotsLocked,
+                $courtSpecialTimes,
+                $baseTimeLine
+            )
+        ];
     }
 
     /**
@@ -193,6 +205,72 @@ class FieldRepository implements IFieldRepository
             ->map(fn($courtTimes) => $courtTimes->keyBy('start_time'));
     }
 
+    private function generateBaseTimeLine(Field $field, Carbon $openingTime, Carbon $closingTime, Carbon $date): array
+    {
+        $baseTimeLine = [];
+        $isToday = $date->isToday();
+        $now = Carbon::now();
+
+        if ($field->prices->isNotEmpty()) {
+            foreach ($field->prices as $price) {
+                $start = Carbon::parse($price->start_time);
+                $end = Carbon::parse($price->end_time);
+                $minRental = $price->min_rental;
+
+                if ($this->isValidPriceRange($start, $end, $openingTime, $closingTime)) {
+                    $baseTimeLine = array_merge(
+                        $baseTimeLine,
+                        $this->buildBaseTimeSlots($start, $end, $openingTime, $closingTime, $minRental, $isToday, $now)
+                    );
+                }
+            }
+        } else {
+            $minRental = 30;
+            $baseTimeLine = $this->buildBaseTimeSlots($openingTime, $closingTime, $openingTime, $closingTime, $minRental, $isToday, $now);
+        }
+
+        return $baseTimeLine;
+    }
+
+    private function buildBaseTimeSlots(
+        Carbon $start,
+        Carbon $end,
+        Carbon $openingTime,
+        Carbon $closingTime,
+        int $minRental,
+        bool $isToday,
+        Carbon $now
+    ): array {
+        $slots = [];
+        $current = $start->copy();
+
+        if ($isToday && $current->lt($start)) {
+            $current = $start->copy();
+        }
+
+        while ($current->lt($end) && $current->gte($start)) {
+            $slotEnd = $current->copy()->addMinutes($minRental);
+            if ($slotEnd->gt($end) || $slotEnd->gt($closingTime)) {
+                break;
+            }
+
+            if ($isToday && $this->isSlotExpired($slotEnd, $now, $minRental)) {
+                $current = $slotEnd;
+                continue;
+            }
+
+            $slots[] = [
+                'start_time' => $current->format('H:i'),
+                'end_time' => $slotEnd->format('H:i'),
+                'time' => sprintf('%s-%s', $current->format('H:i'), $slotEnd->format('H:i')),
+                'duration' => $minRental
+            ];
+            $current = $slotEnd;
+        }
+
+        return $slots;
+    }
+
     private function generateCourtTimeSlots(
         Collection $courts,
         Field      $field,
@@ -200,14 +278,15 @@ class FieldRepository implements IFieldRepository
         Carbon     $closingTime,
         Carbon     $date,
         array      $courtSlotsLocked,
-        Collection $courtSpecialTimes
+        Collection $courtSpecialTimes,
+        array      $baseTimeLine
     ): array
     {
         $result = [];
         foreach ($courts as $court) {
             $specialTimes = $courtSpecialTimes->get($court->court_id, collect());
             $courtSlots = $courtSlotsLocked[$court->court_id] ?? [];
-            $timeSlots = $this->generateTimeSlots($field, $openingTime, $closingTime, $date, $courtSlots, $specialTimes);
+            $timeSlots = $this->generateTimeSlots($field, $openingTime, $closingTime, $date, $courtSlots, $specialTimes, $baseTimeLine);
 
             $result[$court->court_id] = [
                 'name' => $court->court_name ?? 'Unnamed Court',
@@ -217,7 +296,15 @@ class FieldRepository implements IFieldRepository
         return $result;
     }
 
-    private function generateTimeSlots($field, Carbon $openingTime, Carbon $closingTime, Carbon $date, $courtSlots, Collection $specialTimes = null): Collection
+    private function generateTimeSlots(
+        $field,
+        Carbon $openingTime,
+        Carbon $closingTime,
+        Carbon $date,
+        $courtSlots,
+        Collection $specialTimes,
+        array $baseTimeLine
+    ): Collection
     {
         $timeSlots = collect();
         $isToday = $date->isToday();
@@ -239,7 +326,8 @@ class FieldRepository implements IFieldRepository
                         $now,
                         $courtSlots,
                         $specialTimes,
-                        $closingTime
+                        $closingTime,
+                        $baseTimeLine
                     );
                 }
             }
@@ -254,7 +342,8 @@ class FieldRepository implements IFieldRepository
                 $now,
                 $courtSlots,
                 $specialTimes,
-                $closingTime
+                $closingTime,
+                $baseTimeLine
             );
         }
 
@@ -276,50 +365,45 @@ class FieldRepository implements IFieldRepository
         Carbon      $now,
         array       $courtSlots,
         ?Collection $specialTimes,
-        Carbon      $closingTime
+        Carbon      $closingTime,
+        array       $baseTimeLine
     ): void
     {
         $current = $start->copy();
 
         while ($current->lt($end)) {
-            // Mặc định giá và thời gian thuê nếu không có special times
             $price = $defaultPrice;
             $minRental = $defaultMinRental;
 
-            // Lấy thời gian kết thúc của slot
             $slotEnd = $this->getSlotEndTime($current, $minRental, $specialTimes);
 
-            // Kiểm tra nếu slot vượt quá thời gian kết thúc hoặc thời gian đóng cửa
             if ($slotEnd->gt($end) || $slotEnd->gt($closingTime)) {
                 break;
             }
 
-            // Kiểm tra xem slot có bị hết hạn chưa nếu là ngày hôm nay
             if ($isToday && $this->isSlotExpired($slotEnd, $now, $minRental)) {
                 $current = $slotEnd;
                 continue;
             }
 
-            // Kiểm tra xem slot có bị khóa hay không
             $slotStatus = isset($courtSlots[$current->format('H:i')]) ? 'locked' : 'available';
 
-            // Nếu có special times, sử dụng giá và thời gian thuê từ special times
             if (isset($specialTimes[$current->format('H:i:s')])) {
                 $data = $specialTimes[$current->format('H:i:s')];
                 $price = $data['price'];
                 $minRental = $data['min_rental'];
+                $slotEnd = Carbon::parse($data['end_time']);
             }
 
-            // Tạo slot mới và thêm vào timeSlots
             $timeSlots->push($this->createTimeSlot(
                 $current,
                 $slotEnd,
                 $price,
                 $minRental,
-                $slotStatus // Trạng thái của slot: 'locked' hoặc 'available'
+                $slotStatus,
+                $baseTimeLine
             ));
 
-            // Cập nhật current cho vòng lặp tiếp theo
             $current = $slotEnd;
         }
     }
@@ -339,10 +423,19 @@ class FieldRepository implements IFieldRepository
         return $slotEnd->lt($now->copy()->addMinutes($minRental / 2));
     }
 
-    private function createTimeSlot(Carbon $start, Carbon $end, float $price, int $minRental, string $status): array
+    private function createTimeSlot(
+        Carbon $start,
+        Carbon $end,
+        float  $price,
+        int    $minRental,
+        string $status,
+        array  $baseTimeLine
+    ): array
     {
         $startFormatted = $start->format('H:i');
         $endFormatted = $end->format('H:i');
+
+        $colspan = $this->calculateColspan($start, $end, $baseTimeLine);
 
         return [
             'start_time' => $startFormatted,
@@ -351,7 +444,23 @@ class FieldRepository implements IFieldRepository
             'price' => $price,
             'status' => $status,
             'min_rental' => $minRental,
+            'colspan' => $colspan,
         ];
+    }
+
+    private function calculateColspan(Carbon $start, Carbon $end, array $baseTimeLine): int
+    {
+        $startTime = $start->format('H:i');
+        $endTime = $end->format('H:i');
+        $colspan = 0;
+
+        foreach ($baseTimeLine as $baseSlot) {
+            if ($baseSlot['start_time'] >= $startTime && $baseSlot['start_time'] < $endTime) {
+                $colspan++;
+            }
+        }
+
+        return $colspan ?: 1;
     }
 
     public function getFieldStas(): array

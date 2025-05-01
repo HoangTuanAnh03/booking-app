@@ -122,6 +122,7 @@ class VenueRepository implements IVenueRepository
             'venue_id' => $venue->venue_id,
             'venue_name' => $venue->name,
             'venue_address' => $venue->address,
+            'status' => $venue->status,
             'phone_number' => $venue->owner?->phone_number,
             'opening' => $earliestOpening,
             'closing' => $latestClosing,
