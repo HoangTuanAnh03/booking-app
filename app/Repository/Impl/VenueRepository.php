@@ -232,4 +232,51 @@ class VenueRepository implements IVenueRepository
             return [$status => $venueCountsByStatus->get($status, 0)];
         })->all();
     }
+
+    public function searchNearByLatLng($lat, $lng): Collection
+    {
+        $lng = (float) $lng;
+        $lat = (float) $lat;
+
+        $pointWKT = "POINT($lng $lat)";
+
+        // Truy vấn các venue trong bán kính 4km
+        $venues = DB::table('venues')
+            ->select([
+                'venue_id',
+                'name',
+                'address',
+                'status',
+                'latitude',
+                'longitude',
+                DB::raw("ST_Distance_Sphere(coordinates, ST_GeomFromText('$pointWKT')) AS distance")
+            ])
+            ->whereRaw("ST_Distance_Sphere(coordinates, ST_GeomFromText(?)) <= 4000", [$pointWKT])
+            ->orderBy('distance')
+            ->get();
+
+        return $venues->map(function ($venue) {
+            $sportTypes = DB::table('fields')
+                ->join('sport_types', 'fields.sport_type_id', '=', 'sport_types.sport_type_id')
+                ->where('fields.venue_id', $venue->venue_id)
+                ->distinct()
+                ->select('sport_types.sport_type_id', 'sport_types.name')
+                ->get();
+
+            return [
+                'venue_id' => $venue->venue_id,
+                'venue_name' => $venue->name,
+                'latitude' => $venue->latitude,
+                'longitude' => $venue->longitude,
+                'address' => $venue->address,
+                'sport_types' => $sportTypes->map(function ($sportType) {
+                    return [
+                        'id' => $sportType->sport_type_id,
+                        'name' => $sportType->name,
+                    ];
+                }),
+            ];
+        });
+    }
+
 }

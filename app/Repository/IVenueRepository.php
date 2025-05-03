@@ -86,4 +86,6 @@ interface IVenueRepository
     public function activateVenue(string $venueId): Venue;
 
     public function getVenueStas(): array;
+
+    public function searchNearByLatLng($lat, $lng): Collection;
 }

@@ -122,4 +122,8 @@ class VenueService implements IVenueService
     {
         return $this->repository->getVenueStas();
     }
+
+    public function searchNearByLatLng($lat, $lng): Collection{
+        return $this->repository->searchNearByLatLng($lat, $lng);
+    }
 }

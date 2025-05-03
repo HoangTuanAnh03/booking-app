@@ -6,11 +6,14 @@ use App\Http\Requests\PaginatingDataVenueRequest;
 use App\Http\Requests\UpdateVenueStatusRequest;
 use App\Http\Requests\VenueFormRequest;
 use App\Models\Venue;
+use App\Services\IMapService;
 use App\Traits\ApiResponse;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use App\Services\IVenueService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\Request;
+
 
 /**
  * Class VenueController
@@ -30,14 +33,18 @@ class VenueController extends Controller
      */
     private IVenueService $venueService;
 
+    private IMapService $mapService;
+
     /**
      * VenueController constructor.
      *
      * @param IVenueService $venueService
+     * @param IMapService $mapService
      */
-    public function __construct(IVenueService  $venueService)
+    public function __construct(IVenueService  $venueService, IMapService $mapService)
     {
         $this->venueService = $venueService;
+        $this->mapService = $mapService;
     }
 
     /**
@@ -136,5 +143,27 @@ class VenueController extends Controller
     public function getVenueDetail(string $venueId): JsonResponse{
         $data = $this->venueService->getVenueDetail($venueId);
         return $this->successResponse($data, "Detail of Venue for map");
+    }
+
+    public function searchNearByLatLng(Request $request): JsonResponse
+    {
+        $lat = $request->input('lat');
+        $lng = $request->input('lng');
+        $address = $request->input('address');
+
+        if ((!$lat || !$lng) && $address) {
+            try {
+                [$lat, $lng] = $this->mapService->getLatLngByName($address);
+            } catch (\Exception $e) {
+                return $this->errorResponse("ERROR CONVERT LATLNG", 500);
+            }
+        }
+        if (!$lat || !$lng) {
+            return $this->errorResponse("Missing lat/lng or address", 400);
+        }
+
+        [$lat, $lng] = $this->mapService->convertLatLng([$lat, $lng]);
+
+        return $this->successResponse($this->venueService->searchNearByLatLng($lat, $lng), "List of Venues");
     }
 }
