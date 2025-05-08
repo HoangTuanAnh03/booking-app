@@ -3,6 +3,7 @@
 namespace App\Services\Impl;
 
 use App\Exceptions\ErrorException;
+use App\Exceptions\UnauthorizedException;
 use App\Http\Requests\PaginatingDataVenueRequest;
 use App\Http\Requests\VenueFormRequest;
 use App\Models\User;
@@ -37,13 +38,30 @@ class VenueService implements IVenueService
         return $this->repository->show($data);
     }
 
+    /**
+     * @throws UnauthorizedException
+     */
+    public function showForOwner(PaginatingDataVenueRequest $request){
+        if($request->user()->role != 'owner'){
+            throw new UnauthorizedException("Access denied");
+        }
+        $data = [
+            'uid' => $request->user()->uuid,
+            'name' => $request->query('name', ''),
+            'page' => (int) $request->query('page', 1),
+            'limit' => (int) $request->query('limit', 10),
+            'sortBy' => $request->query('sortBy', 'created_at'),
+            'sortDirection' => $request->query('sortDirection', 'desc')
+        ];
+        return $this->repository->showForOwner($data);
+    }
+
     public function findById(string $id): ?Venue
     {
         return $this->repository->getById($id);
     }
 
     /**
-     * @throws ErrorException
      */
     public function add(VenueFormRequest $request): Venue
     {
@@ -123,7 +141,7 @@ class VenueService implements IVenueService
         return $this->repository->getVenueStas();
     }
 
-    public function searchNearByLatLng($lat, $lng): Collection{
-        return $this->repository->searchNearByLatLng($lat, $lng);
+    public function searchNearByLatLng($lat, $lng, $distance): Collection{
+        return $this->repository->searchNearByLatLng($lat, $lng, $distance);
     }
 }

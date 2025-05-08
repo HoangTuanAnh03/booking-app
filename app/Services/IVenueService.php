@@ -23,6 +23,7 @@ interface IVenueService
      */
     public function show(PaginatingDataVenueRequest $request);
 
+    public function showForOwner(PaginatingDataVenueRequest $request);
     /**
      * Find a venue by its ID.
      *
@@ -100,5 +101,5 @@ interface IVenueService
 
     public function getVenueStas(): array;
 
-    public function searchNearByLatLng($lat, $lng): Collection;
+    public function searchNearByLatLng($lat, $lng, $distance): Collection;
 }

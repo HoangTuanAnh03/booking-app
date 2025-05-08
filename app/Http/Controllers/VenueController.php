@@ -61,6 +61,14 @@ class VenueController extends Controller
         );
     }
 
+    public function showForOwner(PaginatingDataVenueRequest $request): JsonResponse
+    {
+        return $this->successResponse(
+            $this->venueService->showForOwner($request),
+            "List of Venues"
+        );
+    }
+
     /**
      * Store a new venue.
      * Only authorized users (admin or owner) can perform this action.
@@ -150,6 +158,10 @@ class VenueController extends Controller
         $lat = $request->input('lat');
         $lng = $request->input('lng');
         $address = $request->input('address');
+        $distance = $request->input('distance');
+        if(!$distance){
+            $distance = 19092003;
+        }
 
         if ((!$lat || !$lng) && $address) {
             try {
@@ -159,11 +171,11 @@ class VenueController extends Controller
             }
         }
         if (!$lat || !$lng) {
-            return $this->errorResponse("Missing lat/lng or address", 400);
+            [$lat, $lng] = [21.03480735100004, 105.85256362400008];
         }
 
         [$lat, $lng] = $this->mapService->convertLatLng([$lat, $lng]);
 
-        return $this->successResponse($this->venueService->searchNearByLatLng($lat, $lng), "List of Venues");
+        return $this->successResponse($this->venueService->searchNearByLatLng($lat, $lng, $distance), "List of Venues");
     }
 }

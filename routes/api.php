@@ -78,6 +78,7 @@ Route::prefix('venues')->group(function () {
     Route::get('/search_by_id/{venue_id}', [VenueController::class, 'findById']);
     Route::get('/search_near', [VenueController::class, 'searchNearByLatLng']);
     Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/owner', [VenueController::class, 'showForOwner']);
         Route::post('/', [VenueController::class, 'store']);
         Route::put('/{venue_id}', [VenueController::class, 'update']);
         Route::delete('/{venue_id}', [VenueController::class, 'delete']);

@@ -22,6 +22,8 @@ interface IVenueRepository
      */
     public function show(array $data);
 
+    public function showForOwner(array $data);
+
     /**
      * Get a single venue by its ID.
      *
@@ -87,5 +89,5 @@ interface IVenueRepository
 
     public function getVenueStas(): array;
 
-    public function searchNearByLatLng($lat, $lng): Collection;
+    public function searchNearByLatLng($lat, $lng, $distance): Collection;
 }
