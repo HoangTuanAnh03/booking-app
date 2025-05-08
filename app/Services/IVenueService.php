@@ -102,4 +102,6 @@ interface IVenueService
     public function getVenueStas(): array;
 
     public function searchNearByLatLng($lat, $lng, $distance): Collection;
+
+    public function searchNearByLatLngForHome($lat, $lng, $distance): Collection;
 }

@@ -76,7 +76,8 @@ Route::prefix('venues')->group(function () {
     Route::get('/map', [VenueController::class, 'venueForMap']);
     Route::get('/detail/{venueId}', [VenueController::class, 'getVenueDetail']);
     Route::get('/search_by_id/{venue_id}', [VenueController::class, 'findById']);
-    Route::get('/search_near', [VenueController::class, 'searchNearByLatLng']);
+    Route::get('/search_near_for_map', [VenueController::class, 'searchNearByLatLng']);
+    Route::get('/search_near_for_home', [VenueController::class, 'searchNearByLatLngForHome']);
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/owner', [VenueController::class, 'showForOwner']);
         Route::post('/', [VenueController::class, 'store']);

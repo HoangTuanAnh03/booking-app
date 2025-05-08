@@ -144,4 +144,8 @@ class VenueService implements IVenueService
     public function searchNearByLatLng($lat, $lng, $distance): Collection{
         return $this->repository->searchNearByLatLng($lat, $lng, $distance);
     }
+
+    public function searchNearByLatLngForHome($lat, $lng, $distance): Collection{
+        return $this->repository->searchNearByLatLngForHome($lat, $lng, $distance);
+    }
 }

@@ -122,34 +122,7 @@ class VenueRepository implements IVenueRepository
             ->where('venue_id', $venueId)
             ->firstOrFail();
 
-        $openingHours = $venue->fields
-            ->pluck('openingHourToday')
-            ->filter();
-
-        $earliestOpening = $openingHours->min('opening_time');
-        $latestClosing = $openingHours->max('closing_time');
-
-        $images = $venue->images->groupBy('type')->mapWithKeys(function ($group, $type) {
-            if ($type !== 'default') {
-                return [$type => $group->first()->image_url ?? null];
-            }
-            return [$type => $group->pluck('image_url')->toArray()];
-        })->toArray();
-
-        return [
-            'venue_id' => $venue->venue_id,
-            'venue_name' => $venue->name,
-            'venue_address' => $venue->address,
-            'status' => $venue->status,
-            'phone_number' => $venue->owner?->phone_number,
-            'opening' => $earliestOpening,
-            'closing' => $latestClosing,
-            'images' => [
-                'thumbnail' => $images['thumbnail'] ?? null,
-                'cover' => $images['cover'] ?? null,
-                'default' => $images['default'] ?? []
-            ]
-        ];
+        return $this->formatVenueDetail($venue);
     }
 
     private function buildVenueQuery($query)
@@ -298,4 +271,94 @@ class VenueRepository implements IVenueRepository
         });
     }
 
+    public function searchNearByLatLngForHome($lat, $lng, $distance): Collection
+    {
+        $lng = (float) $lng;
+        $lat = (float) $lat;
+
+        $pointWKT = "POINT($lng $lat)";
+
+        $venues = DB::table('venues')
+            ->join('users', 'venues.owner_id', '=', 'users.uuid')
+            ->select([
+                'venues.venue_id',
+                'venues.name',
+                'venues.address',
+                'venues.status',
+                'venues.latitude',
+                'venues.longitude',
+                'users.phone_number',
+                DB::raw("ROUND(ST_Distance_Sphere(coordinates, ST_GeomFromText('$pointWKT')) / 1000, 2) AS distance")
+            ])
+            ->whereRaw("ST_Distance_Sphere(coordinates, ST_GeomFromText(?)) <= $distance", [$pointWKT])
+            ->orderBy('distance')
+            ->get();
+
+        return $venues->map(function ($venue) {
+            $venueModel = Venue::with(['fields.openingHourToday', 'images'])
+                ->where('venue_id', $venue->venue_id)
+                ->first();
+
+            return $this->formatVenueBasicInfo($venueModel, [
+                'latitude' => $venue->latitude,
+                'longitude' => $venue->longitude,
+                'distance' => $venue->distance,
+                'phone_number' => $venue->phone_number,
+            ]);
+        });
+    }
+
+    private function formatVenueDetail($venue): array
+    {
+        $openingHours = $venue->fields->pluck('openingHourToday')->filter();
+
+        $earliestOpening = $openingHours->min('opening_time');
+        $latestClosing = $openingHours->max('closing_time');
+
+        $images = $venue->images->groupBy('type')->mapWithKeys(function ($group, $type) {
+            if ($type !== 'default') {
+                return [$type => $group->first()->image_url ?? null];
+            }
+            return [$type => $group->pluck('image_url')->toArray()];
+        })->toArray();
+
+        return [
+            'venue_id' => $venue->venue_id,
+            'venue_name' => $venue->name,
+            'venue_address' => $venue->address,
+            'status' => $venue->status,
+            'phone_number' => $venue->owner?->phone_number,
+            'opening' => $earliestOpening,
+            'closing' => $latestClosing,
+            'images' => [
+                'thumbnail' => $images['thumbnail'] ?? null,
+                'cover' => $images['cover'] ?? null,
+                'default' => $images['default'] ?? []
+            ]
+        ];
+    }
+
+    private function formatVenueBasicInfo($venue, $extra = []): array
+    {
+        $data = $this->formatVenueDetail($venue);
+
+        $sportTypes = DB::table('fields')
+            ->join('sport_types', 'fields.sport_type_id', '=', 'sport_types.sport_type_id')
+            ->where('fields.venue_id', $venue->venue_id)
+            ->distinct()
+            ->select('sport_types.sport_type_id', 'sport_types.name')
+            ->get()
+            ->map(fn($sportType) => [
+                'id' => $sportType->sport_type_id,
+                'name' => $sportType->name,
+            ]);
+
+        return array_merge($data, [
+            'latitude' => $extra['latitude'] ?? null,
+            'longitude' => $extra['longitude'] ?? null,
+            'distance' => $extra['distance'] ?? null,
+            'sport_types' => $sportTypes,
+            'phone_number' => $extra['phone_number'] ?? ($data['phone_number'] ?? null),
+        ]);
+    }
 }

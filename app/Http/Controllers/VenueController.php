@@ -155,27 +155,54 @@ class VenueController extends Controller
 
     public function searchNearByLatLng(Request $request): JsonResponse
     {
+        try {
+            [$lat, $lng] = $this->resolveLatLng($request);
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage(), 500);
+        }
+
+        $distance = $request->input('distance', 19092003);
+
+        return $this->successResponse(
+            $this->venueService->searchNearByLatLng($lat, $lng, $distance),
+            "List of Venues"
+        );
+    }
+
+    public function searchNearByLatLngForHome(Request $request): JsonResponse
+    {
+        try {
+            [$lat, $lng] = $this->resolveLatLng($request);
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage(), 500);
+        }
+
+        $distance = $request->input('distance', 19092003);
+
+        return $this->successResponse(
+            $this->venueService->searchNearByLatLngForHome($lat, $lng, $distance),
+            "List of Venues"
+        );
+    }
+
+    private function resolveLatLng(Request $request): array
+    {
         $lat = $request->input('lat');
         $lng = $request->input('lng');
         $address = $request->input('address');
-        $distance = $request->input('distance');
-        if(!$distance){
-            $distance = 19092003;
-        }
 
         if ((!$lat || !$lng) && $address) {
             try {
                 [$lat, $lng] = $this->mapService->getLatLngByName($address);
             } catch (\Exception $e) {
-                return $this->errorResponse("ERROR CONVERT LATLNG", 500);
+                throw new \Exception("ERROR CONVERT LATLNG");
             }
         }
+
         if (!$lat || !$lng) {
             [$lat, $lng] = [21.03480735100004, 105.85256362400008];
         }
 
-        [$lat, $lng] = $this->mapService->convertLatLng([$lat, $lng]);
-
-        return $this->successResponse($this->venueService->searchNearByLatLng($lat, $lng, $distance), "List of Venues");
+        return $this->mapService->convertLatLng([$lat, $lng]);
     }
 }
