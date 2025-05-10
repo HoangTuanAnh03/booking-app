@@ -84,7 +84,6 @@ Route::prefix('venues')->group(function () {
         Route::put('/{venue_id}', [VenueController::class, 'update']);
         Route::delete('/{venue_id}', [VenueController::class, 'delete']);
         Route::patch('/{venue_id}/status', [VenueController::class, 'updateStatus']);
-
     });
 });
 

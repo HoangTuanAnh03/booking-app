@@ -134,8 +134,8 @@ class BookingService implements IBookingService
                                 throw new ErrorException("Field opening hours not found for the selected day.");
                             }
 
-                            $fieldStartTime = $this->toCarbonTime('H:i:s', $fieldOpeningHours->start_time);
-                            $fieldEndTime = $this->toCarbonTime('H:i:s', $fieldOpeningHours->end_time);
+                            $fieldStartTime = $this->toCarbonTime('H:i:s', $fieldOpeningHours->opening_time);
+                            $fieldEndTime = $this->toCarbonTime('H:i:s', $fieldOpeningHours->closing_time);
 
                             $price = $field->default_price;
                             $minRental = 30;

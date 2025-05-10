@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class FieldPriceSeeder extends Seeder
@@ -12,172 +13,52 @@ class FieldPriceSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::table('field_price')->insert([
-            [
-                'field_price_id' => 1,
-                'field_id' => 'dcb38c24-adb0-4c57-9551-ed4413becf4o',
-                'day_of_week' => 'Monday',
-                'start_time' => '06:00:00',
-                'end_time' => '07:00:00',
-                'price' => 200000,
-                'min_rental' => 30,
-                'created_at' => now(),
-                'updated_at' => now(),
+        $now = Carbon::now();
+        $data = [];
+        $fieldPriceId = 1;
+
+        $fieldPrices = [
+            '3a4b5c6d-7e8f-9a0b-1c2d-3e4f5a6b7c8d' => [
+                ['monday',    '08:00:00', '09:00:00', 140000, 30],
+                ['monday',    '09:00:00', '11:00:00', 150000, 40],
+                ['monday',    '11:00:00', '13:00:00', 140000, 30],
+                ['monday',    '13:00:00', '14:00:00', 180000, 60],
+                ['monday',    '14:00:00', '17:00:00', 150000, 45],
+                ['monday',    '17:00:00', '19:00:00', 100000, 30],
+                ['monday',    '19:00:00', '21:00:00', 170000, 40],
+
+                ['tuesday',    '08:00:00', '10:00:00', 130000, 30],
+                ['tuesday',    '10:00:00', '12:00:00', 110000, 40],
+                ['tuesday',    '12:00:00', '15:00:00', 160000, 45],
+                ['tuesday',    '15:00:00', '21:00:00', 180000, 40],
+
+                ['wednesday',    '08:00:00', '12:00:00', 130000, 30],
+                ['wednesday',    '12:00:00', '14:00:00', 130000, 40],
+                ['wednesday',    '14:00:00', '21:00:00', 130000, 35],
+
+                ['thursday',    '08:00:00', '21:00:00', 200000, 30],
+                ['friday',    '08:00:00', '22:00:00', 200000, 30],
+                ['saturday',    '08:00:00', '23:00:00', 200000, 30],
+                ['sunday',    '08:00:00', '23:00:00', 200000, 30],
             ],
-            [
-                'field_price_id' => 2,
-                'field_id' => 'dcb38c24-adb0-4c57-9551-ed4413becf4o',
-                'day_of_week' => 'Monday',
-                'start_time' => '07:00:00',
-                'end_time' => '08:00:00',
-                'price' => 100000,
-                'min_rental' => 20,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'field_price_id' => 3,
-                'field_id' => 'dcb38c24-adb0-4c57-9551-ed4413becf4o',
-                'day_of_week' => 'Monday',
-                'start_time' => '08:00:00',
-                'end_time' => '08:30:00',
-                'price' => 200000,
-                'min_rental' => 30,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'field_price_id' => 4,
-                'field_id' => 'dcb38c24-adb0-4c57-9551-ed4413becf4o',
-                'day_of_week' => 'Monday',
-                'start_time' => '08:30:00',
-                'end_time' => '09:00:00',
-                'price' => 100000,
-                'min_rental' => 30,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'field_price_id' => 5,
-                'field_id' => 'dcb38c24-adb0-4c57-9551-ed4413becf4o',
-                'day_of_week' => 'Monday',
-                'start_time' => '09:00:00',
-                'end_time' => '13:00:00',
-                'price' => 200000,
-                'min_rental' => 30,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'field_price_id' => 6,
-                'field_id' => 'dcb38c24-adb0-4c57-9551-ed4413becf4o',
-                'day_of_week' => 'Monday',
-                'start_time' => '13:00:00',
-                'end_time' => '15:00:00',
-                'price' => 100000,
-                'min_rental' => 60,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'field_price_id' => 7,
-                'field_id' => 'dcb38c24-adb0-4c57-9551-ed4413becf4o',
-                'day_of_week' => 'Monday',
-                'start_time' => '15:00:00',
-                'end_time' => '22:00:00',
-                'price' => 200000,
-                'min_rental' => 30,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'field_price_id' => 8,
-                'field_id' => 'dcb38c24-adb0-4c57-9551-ed4413becf4o',
-                'day_of_week' => 'Tuesday',
-                'start_time' => '07:00:00',
-                'end_time' => '10:30:00',
-                'price' => 200000,
-                'min_rental' => 30,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'field_price_id' => 9,
-                'field_id' => 'dcb38c24-adb0-4c57-9551-ed4413becf4o',
-                'day_of_week' => 'Tuesday',
-                'start_time' => '10:30:00',
-                'end_time' => '12:00:00',
-                'price' => 70000,
-                'min_rental' => 30,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'field_price_id' => 10,
-                'field_id' => 'dcb38c24-adb0-4c57-9551-ed4413becf4o',
-                'day_of_week' => 'Tuesday',
-                'start_time' => '12:00:00',
-                'end_time' => '21:30:00',
-                'price' => 200000,
-                'min_rental' => 30,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'field_price_id' => 11,
-                'field_id' => 'dcb38c24-adb0-4c57-9551-ed4413becf4o',
-                'day_of_week' => 'Wednesday',
-                'start_time' => '08:00:00',
-                'end_time' => '22:00:00',
-                'price' => 200000,
-                'min_rental' => 30,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'field_price_id' => 12,
-                'field_id' => 'dcb38c24-adb0-4c57-9551-ed4413becf4o',
-                'day_of_week' => 'Thursday',
-                'start_time' => '07:30:00',
-                'end_time' => '21:00:00',
-                'price' => 200000,
-                'min_rental' => 30,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'field_price_id' => 13,
-                'field_id' => 'dcb38c24-adb0-4c57-9551-ed4413becf4o',
-                'day_of_week' => 'Friday',
-                'start_time' => '06:30:00',
-                'end_time' => '23:00:00',
-                'price' => 200000,
-                'min_rental' => 30,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'field_price_id' => 14,
-                'field_id' => 'dcb38c24-adb0-4c57-9551-ed4413becf4o',
-                'day_of_week' => 'Saturday',
-                'start_time' => '07:00:00',
-                'end_time' => '23:30:00',
-                'price' => 200000,
-                'min_rental' => 30,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'field_price_id' => 15,
-                'field_id' => 'dcb38c24-adb0-4c57-9551-ed4413becf4o',
-                'day_of_week' => 'Sunday',
-                'start_time' => '08:00:00',
-                'end_time' => '20:00:00',
-                'price' => 200000,
-                'min_rental' => 30,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ]);
+        ];
+
+        foreach ($fieldPrices as $fieldId => $prices) {
+            foreach ($prices as $price) {
+                $data[] = [
+                    'field_price_id' => $fieldPriceId++,
+                    'field_id' => $fieldId,
+                    'day_of_week' => $price[0],
+                    'start_time' => $price[1],
+                    'end_time' => $price[2],
+                    'price' => $price[3],
+                    'min_rental' => $price[4],
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+        }
+
+        DB::table('field_price')->insert($data);
     }
 }
