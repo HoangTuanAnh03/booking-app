@@ -9,6 +9,7 @@ use App\Http\Requests\BookingRequest;
 use App\Http\Requests\CourtLockingRequest;
 use App\Http\Requests\CourtSlotCheckingRequest;
 use App\Mail\PaymentNotificationEmail;
+use App\Models\Booking;
 use App\Models\CourtSpecialTime;
 use App\Models\Field;
 use App\Models\Venue;
@@ -265,6 +266,10 @@ class BookingService implements IBookingService
         if ($booking->status == 'confirmed') {
             throw new ErrorException("Booking has been confirmed before");
         }
+
+        if($booking->status == 'completed'){
+            throw new ErrorException("Booking has been completed before");
+        }
         $field = $this->fieldRepository->getById($booking->field_id);
         $venue = $this->venueRepository->getById($field->venue_id);
         $owner = $this->userRepository->getById($venue->owner_id);
@@ -482,6 +487,7 @@ class BookingService implements IBookingService
             $courts = $booking->bookingCourts->map(function ($court) {
                 return [
                     'court_id' => $court->court_id,
+                    'court_name' => $court->court->court_name,
                     'start_time' => Carbon::parse($court->start_time)->format('H:i:s'),
                     'end_time' => Carbon::parse($court->end_time)->format('H:i:s'),
                     'price' => number_format($court->price, 2),
@@ -496,6 +502,7 @@ class BookingService implements IBookingService
                 'customer_phone' => $booking->customer_phone,
                 'status' => $booking->status,
                 'courts' => $courts,
+                'created_at' => $booking->created_at->format('Y-m-d H:i:s'),
             ];
         }
         return [
@@ -528,7 +535,7 @@ class BookingService implements IBookingService
             throw new UnauthorizedException("You don't have permission to access this page");
         }
 
-        if($booking->status === 'pending'){
+        if ($booking->status === 'pending') {
             $field = $this->fieldRepository->getById($booking->field_id);
             $venue = $this->venueRepository->getById($field->venue_id);
             return [
@@ -542,8 +549,70 @@ class BookingService implements IBookingService
         throw new ErrorException("Booking already $booking->status");
     }
 
+    public function getUserBookings(Request $request): array
+    {
+        $user = $request->user();
+        return Booking::where('user_id', $user->uuid)
+            ->with([
+                'field.venue' => function ($query) {
+                    $query->select('venue_id', 'name', 'address');
+                },
+                'bookingCourts.court' => function ($query) {
+                    $query->select('court_id', 'court_name');
+                },
+                'bookingCourts.courtSlots' => function ($query) {
+                    $query->select('slot_id', 'court_id', 'booking_court_id', 'start_time', 'end_time', 'date');
+                }
+            ])
+            ->select('booking_id', 'field_id', 'user_id', 'status', 'created_at')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($booking) {
+                $statusDisplay = $this->getBookingStatusDisplay($booking);
+                $courtSlots = $booking->bookingCourts->flatMap(function ($bookingCourt) {
+                    return $bookingCourt->courtSlots->map(function ($slot) use ($bookingCourt) {
+                        return [
+                            'court_id' => $bookingCourt->court->court_id,
+                            'court_name' => $bookingCourt->court->court_name,
+                            'start_time' => $slot->start_time,
+                            'end_time' => $slot->end_time,
+                            'date' => $slot->date,
+                        ];
+                    });
+                });
+
+                return [
+                    'booking_id' => $booking->booking_id,
+                    'venue_name' => $booking->field->venue->name,
+                    'venue_address' => $booking->field->venue->address,
+                    'field_name' => $booking->field->field_name,
+                    'court_slots' => $courtSlots,
+                    'status' => $statusDisplay,
+                    'created_at' => $booking->created_at->format('Y-m-d H:i:s'),
+                ];
+            })->toArray();
+    }
+
     private function toCarbonTime(string $from, $data): ?Carbon
     {
         return Carbon::createFromFormat($from, $data);
+    }
+
+    private function getBookingStatusDisplay($booking): string
+    {
+        $createdAt = Carbon::parse($booking->created_at);
+        $fifteenMinutesAgo = Carbon::now()->subMinutes(15);
+
+        if ($booking->status === 'cancelled') {
+            return 'Đã hủy';
+        } elseif ($booking->status === 'completed') {
+            return 'Đã xác nhận';
+        } elseif ($booking->status === 'pending' && $createdAt->gt($fifteenMinutesAgo)) {
+            return 'Chờ thanh toán';
+        } elseif ($booking->status === 'confirmed' && $createdAt->gt($fifteenMinutesAgo)) {
+            return 'Chờ chủ sân xác nhận';
+        } else {
+            return 'Hủy do quá thời gian';
+        }
     }
 }

@@ -127,4 +127,9 @@ class BookingController extends Controller
     public function getPaymentQRCode(Request $request, string $bookingId): JsonResponse{
         return $this->successResponse($this->bookingService->getPaymentQRCode($request, $bookingId), "Payment QR code successfully");
     }
+
+    public function getUserBookings(Request $request): JsonResponse
+    {
+        return $this->successResponse($this->bookingService->getUserBookings($request), "User booking list successfully");
+    }
 }

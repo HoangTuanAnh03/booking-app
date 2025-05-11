@@ -84,4 +84,6 @@ interface IBookingService
      * @return array The QR code details.
      */
     public function getPaymentQRCode(Request $request, $bookingId): array;
+
+    public function getUserBookings(Request $request): array;
 }

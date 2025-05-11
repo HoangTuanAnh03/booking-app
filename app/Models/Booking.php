@@ -25,4 +25,9 @@ class Booking extends Model
     {
         return $this->hasMany(BookingCourt::class, 'booking_id', 'booking_id');
     }
+
+    public function field(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Field::class, 'field_id', 'field_id');
+    }
 }

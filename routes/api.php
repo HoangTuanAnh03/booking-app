@@ -159,6 +159,7 @@ Route::prefix('/bookings')->group(function () {
             Route::post('', [BookingController::class, 'store']);
             Route::get('/{id}/confirm', [BookingController::class, 'confirm']);
             Route::get('/stats', [BookingController::class, 'getUserBookingStats']);
+            Route::get('/list', [BookingController::class, 'getUserBookings']);
             Route::get('/{bookingId}', [BookingController::class, 'getPaymentQRCode']);
         });
         Route::middleware('ability:owner')->group(function () {
