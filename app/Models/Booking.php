@@ -10,6 +10,7 @@ class Booking extends Model
     protected $table = 'booking';
     protected $primaryKey = 'booking_id';
     protected $keyType = 'string';
+    public $incrementing = false;
 
     protected $fillable = [
         'booking_id',

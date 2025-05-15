@@ -20,9 +20,9 @@ interface IBookingRepository
      * Creates a new booking.
      *
      * @param array $data The booking data.
-     * @return string The created booking ID.
+     * @return Booking The created booking.
      */
-    public function createBooking(array $data): string;
+    public function createBooking(array $data): Booking;
 
     /**
      * Creates a booking court entry.

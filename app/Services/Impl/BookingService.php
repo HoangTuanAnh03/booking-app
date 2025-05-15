@@ -172,7 +172,7 @@ class BookingService implements IBookingService
 
             foreach ($validatedSlots as $slot) {
                 $bookingCourt = $this->repository->createBookingCourt([
-                    'booking_id' => $booking,
+                    'booking_id' => $booking->booking_id,
                     'court_id' => $slot['court_id'],
                     'start_time' => $slot['start_time'],
                     'end_time' => $slot['end_time'],
@@ -196,22 +196,22 @@ class BookingService implements IBookingService
                     $currentTime = $nextTime;
                 }
             }
-
+            $message = "Thanh Toan Don $booking->order_id";
             $this->paymentRepository->createPayment([
-                'booking_id' => $booking,
+                'booking_id' => $booking->booking_id,
                 'uid' => $data['user_id'],
                 'amount' => $totalPrice,
-                'message' => $booking,
+                'message' => $message,
             ]);
 
             $field = $this->fieldRepository->getById($data['field_id']);
             $venue = $this->venueRepository->getById($field->venue_id);
             return [
-                'booking_id' => $booking,
+                'booking_id' => $booking->booking_id,
                 'total_price' => $totalPrice,
                 'bank_name' => $venue->bank_name,
                 'bank_account' => $venue->bank_account_number,
-                'qr_url' => "https://img.vietqr.io/image/$venue->bank_name-$venue->bank_account_number-compact2.jpg?amount=$totalPrice&addInfo=$booking"
+                'qr_url' => "https://img.vietqr.io/image/$venue->bank_name-$venue->bank_account_number-compact2.jpg?amount=$totalPrice&addInfo=$message"
             ];
         });
     }
@@ -483,7 +483,12 @@ class BookingService implements IBookingService
             if ($booking->status === 'completed') {
                 $totalCompletedPrice += $booking->total_price;
             }
-
+            if (in_array($booking->status, ['pending', 'confirmed'])) {
+                $createdAt = Carbon::parse($booking->created_at);
+                if ($createdAt->diffInMinutes(now()) > 15) {
+                    $booking->status = 'overdue';
+                }
+            }
             $courts = $booking->bookingCourts->map(function ($court) {
                 return [
                     'court_id' => $court->court_id,
@@ -495,6 +500,7 @@ class BookingService implements IBookingService
             });
             $mappedBookings[] = [
                 'booking_id' => $booking->booking_id,
+                'message' => "Thanh Toan Don $booking->order_id",
                 'field_id' => $booking->field_id,
                 'booking_date' => Carbon::parse($booking->booking_date)->format('Y-m-d'),
                 'total_price' => number_format($booking->total_price, 2),

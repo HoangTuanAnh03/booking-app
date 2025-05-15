@@ -18,7 +18,7 @@ return new class extends Migration
             $table->uuid('venue_id');
             $table->integer('amount');
             $table->string('message');
-            $table->string('code');
+//            $table->bigInteger('code')->unique()->nullable();
             $table->enum('status', ['pending', 'paid', 'failed'])->default('pending');
             $table->timestamps();
         });

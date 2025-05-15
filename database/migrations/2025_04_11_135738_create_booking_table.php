@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('booking', function (Blueprint $table) {
             $table->uuid("booking_id")->primary();
+            $table->bigInteger('order_id')->unique()->nullable();;
             $table->uuid("field_id");
             $table->uuid("user_id");
             $table->decimal("total_price", 10, 2);

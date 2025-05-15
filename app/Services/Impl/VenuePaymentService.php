@@ -62,37 +62,48 @@ class VenuePaymentService implements IVenuePaymentService
         }
 
         $returnUri = $request->query('return_url');
-        Log::warning($returnUri);
-        do {
-            $code = Str::upper(Str::random(20));
-        } while (DB::table('venue_payment')->where('code', $code)->exists());
+//        Log::warning($returnUri);
+//        do {
+//            $code = Str::upper(Str::random(20));
+//        } while (DB::table('venue_payment')->where('code', $code)->exists());
+
+
         $data = [
             "owner_id" => $request->user()->uuid,
             "venue_id" => $venue_id,
             "amount" => 20000,
-            "code" => $code,
-            "message" => "TT $code"
+//            "code" => $code,
+            "message" => "TT 199203"
         ];
         $orderCode = now()->timestamp;
 
-        $body = [
-            'orderCode' => $orderCode,
-            'amount' => $data['amount'],
-            'description' => $data['message'],
-            'returnUrl' => $returnUri,
-            'cancelUrl' => $returnUri,
-            'items' => [
-                [
-                    'name' => 'Thanh toán sân #' . $data['venue_id'],
-                    'quantity' => 1,
-                    'price' => $data['amount']
-                ]
-            ],
-        ];
+
         $payOs = new PayOS(env('CLIENT_ID'), env('API_KEY'), env('CHECKSUM_KEY'));
         try {
+
+            $record = $this->venuePaymentRepository->store($data);
+            $record->refresh();
+
+            $code = $record->id;
+            $record->message = "Thanh Toan $code";
+            $record->save();
+
+
+            $body = [
+                'orderCode' => $orderCode,
+                'amount' => $data['amount'],
+                'description' => $record->message,
+                'returnUrl' => $returnUri,
+                'cancelUrl' => $returnUri,
+                'items' => [
+                    [
+                        'name' => 'Thanh toán sân ' . $venue->venue_name,
+                        'quantity' => 1,
+                        'price' => $data['amount']
+                    ]
+                ],
+            ];
             $response = $payOs->createPaymentLink($body);
-            $this->venuePaymentRepository->store($data);
             return response()->json([
                 'checkoutUrl' => $response['checkoutUrl'],
                 'orderCode' => $orderCode
@@ -121,7 +132,7 @@ class VenuePaymentService implements IVenuePaymentService
         $description = $data['description'] ?? null;
         $array = explode(' ', $description);
         $code = end($array);
-        VenuePayment::where('code', $code)->update(['status' => 'paid']);
+        VenuePayment::where('id', $code)->update(['status' => 'paid']);
         Log::info("💰 Đã xác nhận thanh toán cho order #$orderCode với số tiền $amount VNĐ");
     }
 

@@ -7,6 +7,7 @@ use App\Models\bookingCourt;
 use App\Models\FieldPrice;
 use App\Repository\IBookingRepository;
 use Illuminate\Support\Str;
+use function Symfony\Component\String\b;
 
 class BookingRepository implements IBookingRepository
 {
@@ -14,10 +15,10 @@ class BookingRepository implements IBookingRepository
     {
         return Booking::where("booking_id", $id)->first();
     }
-    public function createBooking(array $data): string
+    public function createBooking(array $data): Booking
     {
         $booking_id = Str::uuid();
-        Booking::create([
+        $booking = Booking::create([
             'booking_id' => $booking_id,
             'field_id' => $data['field_id'],
             'user_id' => $data['user_id'],
@@ -27,7 +28,8 @@ class BookingRepository implements IBookingRepository
             'status' => $data['status'] ?? 'pending',
             'booking_date' => $data['booking_date'],
         ]);
-        return $booking_id;
+        $booking->refresh();
+        return $booking;
     }
 
     public function createBookingCourt(array $data): BookingCourt
@@ -71,7 +73,7 @@ class BookingRepository implements IBookingRepository
             ->with(['bookingCourts' => function ($query) {
                 $query->select('booking_court_id', 'booking_id', 'court_id', 'start_time', 'end_time', 'price');
             }])
-            ->select('booking_id', 'field_id', 'user_id', 'total_price', 'customer_name', 'customer_phone', 'status', 'booking_date', 'created_at')
+            ->select('booking_id', 'field_id', 'user_id', 'total_price', 'customer_name', 'customer_phone', 'status', 'booking_date', 'created_at', 'order_id')
             ->orderByRaw("
                 CASE
                     WHEN status = 'confirmed' AND created_at >= ? THEN 1

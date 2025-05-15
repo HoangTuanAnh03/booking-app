@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Venue;
 use App\Repository\IVenueRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -25,6 +26,7 @@ class VenueRepository implements IVenueRepository
 
     public function showForOwner(array $data)
     {
+        $data['include_payment_status'] = true;
         return $this->getVenuesQuery($data)
             ->where('owner_id', $data['uid'])
             ->get()
@@ -33,7 +35,36 @@ class VenueRepository implements IVenueRepository
 
     private function getVenuesQuery(array $data)
     {
-        return Venue::with('images')
+//        return Venue::with('images')
+//            ->when(!empty($data['name']), function ($query) use ($data) {
+//                $query->where('name', 'like', '%' . $data['name'] . '%');
+//            })
+//            ->orderBy($data['sortBy'] ?? 'created_at', $data['sortDirection'] ?? 'desc')
+//            ->skip((($data['page'] ?? 1) - 1) * ($data['limit'] ?? 10))
+//            ->take($data['limit'] ?? 10);
+
+        $query = Venue::with('images')->select('*');
+
+        if (isset($data['include_payment_status']) && $data['include_payment_status']) {
+            $now = Carbon::now();
+            $startOfMonth = $now->copy()->startOfMonth();
+            $endOfMonth = $now->copy()->endOfMonth();
+
+            $query->addSelect([
+                'payment_status' => function ($query) use ($startOfMonth, $endOfMonth) {
+                    $query->select(DB::raw('CASE WHEN EXISTS (
+                    SELECT 1
+                    FROM venue_payment
+                    WHERE venue_payment.venue_id = venues.venue_id
+                    AND venue_payment.status = \'paid\'
+                    AND venue_payment.created_at BETWEEN ? AND ?
+                ) THEN 1 ELSE 0 END'))
+                        ->addBinding([$startOfMonth, $endOfMonth], 'select');
+                }
+            ]);
+        }
+
+        return $query
             ->when(!empty($data['name']), function ($query) use ($data) {
                 $query->where('name', 'like', '%' . $data['name'] . '%');
             })
@@ -46,7 +77,7 @@ class VenueRepository implements IVenueRepository
     {
         $images = $venue->images->groupBy('type');
 
-        return [
+        $result = [
             'venue_id' => $venue->venue_id,
             'name' => $venue->name,
             'address' => $venue->address,
@@ -54,7 +85,14 @@ class VenueRepository implements IVenueRepository
             'cover' => $images->has('cover') ? $images['cover']->first()->image_url : null,
             'created_at' => $venue->created_at,
             'updated_at' => $venue->updated_at,
+            'status' => $venue->status,
         ];
+
+        if (isset($venue->payment_status)) {
+            $result['payment_status'] = (bool) $venue->payment_status;
+        }
+
+        return $result;
     }
 
     public function getById(string $id)
