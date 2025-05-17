@@ -91,4 +91,8 @@ interface IVenueRepository
 
     public function searchNearByLatLng($lat, $lng, $distance): Collection;
     public function searchNearByLatLngForHome($lat, $lng, $distance): Collection;
+
+    public function countVenuesByOwner($ownerId): int;
+
+    public function countActiveVenuesByOwner($ownerId): int;
 }

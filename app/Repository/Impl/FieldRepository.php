@@ -474,4 +474,15 @@ class FieldRepository implements IFieldRepository
             'detail' => $sports,
         ];
     }
+
+    public function getTotalField($ownerId){
+        return DB::table('fields')
+            ->join('venues', 'fields.venue_id', '=', 'venues.venue_id')
+            ->where('venues.owner_id', $ownerId)
+            ->selectRaw('
+                SUM(CASE WHEN venues.status = "active" THEN 1 ELSE 0 END) as active_fields,
+                SUM(CASE WHEN venues.status != "active" THEN 1 ELSE 0 END) as inactive_fields
+            ')
+            ->first();
+    }
 }

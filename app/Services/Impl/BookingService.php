@@ -10,6 +10,7 @@ use App\Http\Requests\CourtLockingRequest;
 use App\Http\Requests\CourtSlotCheckingRequest;
 use App\Mail\PaymentNotificationEmail;
 use App\Models\Booking;
+use App\Models\bookingCourt;
 use App\Models\CourtSpecialTime;
 use App\Models\Field;
 use App\Models\Venue;
@@ -210,6 +211,7 @@ class BookingService implements IBookingService
                 'booking_id' => $booking->booking_id,
                 'total_price' => $totalPrice,
                 'bank_name' => $venue->bank_name,
+                'message' => $message,
                 'bank_account' => $venue->bank_account_number,
                 'qr_url' => "https://img.vietqr.io/image/$venue->bank_name-$venue->bank_account_number-compact2.jpg?amount=$totalPrice&addInfo=$message"
             ];
@@ -267,7 +269,7 @@ class BookingService implements IBookingService
             throw new ErrorException("Booking has been confirmed before");
         }
 
-        if($booking->status == 'completed'){
+        if ($booking->status == 'completed') {
             throw new ErrorException("Booking has been completed before");
         }
         $field = $this->fieldRepository->getById($booking->field_id);
@@ -294,7 +296,8 @@ class BookingService implements IBookingService
             $field->field_name,
             $venue->name,
             $booking->total_price,
-            str_replace('-', '', $booking->booking_id),
+//            str_replace('-', '', $booking->booking_id),
+            "Thanh Toan Don $booking->order_id",
             $booking->booking_date,
             $grouped
         );
@@ -570,7 +573,7 @@ class BookingService implements IBookingService
                     $query->select('slot_id', 'court_id', 'booking_court_id', 'start_time', 'end_time', 'date');
                 }
             ])
-            ->select('booking_id', 'field_id', 'user_id', 'status', 'created_at')
+            ->select('booking_id', 'field_id', 'user_id', 'status', 'created_at', 'total_price')
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($booking) {
@@ -589,6 +592,7 @@ class BookingService implements IBookingService
 
                 return [
                     'booking_id' => $booking->booking_id,
+                    'total_price' => number_format($booking->total_price, 0),
                     'venue_name' => $booking->field->venue->name,
                     'venue_address' => $booking->field->venue->address,
                     'field_name' => $booking->field->field_name,
@@ -620,5 +624,84 @@ class BookingService implements IBookingService
         } else {
             return 'Hủy do quá thời gian';
         }
+    }
+
+    public function stats(Request $request): array
+    {
+        $owner = auth()->user();
+        $month = $request->query('month');
+        $year = $request->query('year', now()->year);
+
+        $venues = Venue::where('owner_id', $owner->uuid)
+            ->with(['fields.courts'])
+            ->get();
+
+        $result = [];
+
+        foreach ($venues as $venue) {
+            $totalVenueRevenue = 0;
+            $fieldsData = [];
+
+            foreach ($venue->fields as $field) {
+                $totalFieldRevenue = 0;
+                $courtsData = [];
+
+                foreach ($field->courts as $court) {
+                    $bookingCourts = BookingCourt::where('court_id', $court->court_id)
+                        ->whereHas('booking', function ($q) use ($month, $year) {
+                            $q->where('status', 'completed');
+                            if ($month) {
+                                $q->whereMonth('booking_date', $month);
+                            }
+                            if ($year) {
+                                $q->whereYear('booking_date', $year);
+                            }
+                        });
+
+                    $courtRevenue = $bookingCourts->sum('price');
+                    $totalFieldRevenue += $courtRevenue;
+                    $courtsData[] = [
+                        'court_id' => $court->court_id,
+                        'court_name' => $court->court_name,
+                        'total_revenue' => (float) $courtRevenue
+                    ];
+                }
+
+                $totalVenueRevenue += $totalFieldRevenue;
+                $fieldsData[] = [
+                    'field_id' => $field->field_id,
+                    'field_name' => $field->field_name,
+                    'total_revenue' => (float) $totalFieldRevenue,
+                    'courts' => $courtsData
+                ];
+            }
+
+            $result[] = [
+                'venue_id' => $venue->venue_id,
+                'name' => $venue->name,
+                'total_revenue' => (float) $totalVenueRevenue,
+                'fields' => $fieldsData
+            ];
+        }
+
+        return [
+            'total_revenue' => (float) array_sum(array_column($result, 'total_revenue')),
+            'venues' => $result
+        ];
+    }
+
+    public function getTop5VenuesByRevenue(Request $request){
+        $owner = $request->user();
+        $month = now()->month;
+        $year = now()->year;
+        return $this->repository->getTop5VenuesByRevenue($owner->uuid, $year, $month);
+    }
+
+    public function getTop5VenuesByBooking(Request $request){
+        $owner = $request->user();
+        $month = now()->month;
+        $year = now()->year;
+
+        return $this->repository->getTop5VenuesByBooking($owner->uuid, $year, $month);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Services;
 use App\Http\Requests\PaginatingDataVenueRequest;
 use App\Http\Requests\VenueFormRequest;
 use App\Models\Venue;
+use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
@@ -104,4 +105,8 @@ interface IVenueService
     public function searchNearByLatLng($lat, $lng, $distance): Collection;
 
     public function searchNearByLatLngForHome($lat, $lng, $distance): Collection;
+
+    public function countVenuesByOwner(Request $request): int;
+
+    public function countActiveVenuesByOwner(Request $request): int;
 }

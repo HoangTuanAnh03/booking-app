@@ -132,4 +132,9 @@ class BookingController extends Controller
     {
         return $this->successResponse($this->bookingService->getUserBookings($request), "User booking list successfully");
     }
+
+    public function stats(Request $request): JsonResponse
+    {
+        return $this->successResponse($this->bookingService->stats($request), "");
+    }
 }

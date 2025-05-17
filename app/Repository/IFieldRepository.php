@@ -69,4 +69,6 @@ interface IFieldRepository
     public function getCourtsByFieldAndDate(string $fieldId, string $date): array;
 
     public function getFieldStas(): array;
+
+    public function getTotalField($ownerId);
 }

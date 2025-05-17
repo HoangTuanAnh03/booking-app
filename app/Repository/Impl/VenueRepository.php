@@ -399,4 +399,17 @@ class VenueRepository implements IVenueRepository
             'phone_number' => $extra['phone_number'] ?? ($data['phone_number'] ?? null),
         ]);
     }
+
+    public function countVenuesByOwner($ownerId): int{
+        return DB::table('venues')
+            ->where('owner_id', $ownerId)
+            ->count();
+    }
+
+    public function countActiveVenuesByOwner($ownerId): int{
+        return DB::table('venues')
+            ->where('owner_id', $ownerId)
+            ->where('status', 'active')
+            ->count();
+    }
 }

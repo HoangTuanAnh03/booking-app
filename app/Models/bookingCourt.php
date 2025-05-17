@@ -33,4 +33,9 @@ class bookingCourt extends Model
     {
         return $this->hasMany(CourtSlot::class, 'booking_court_id', 'booking_court_id');
     }
+
+    public function booking()
+    {
+        return $this->belongsTo(Booking::class, 'booking_id', 'booking_id');
+    }
 }
