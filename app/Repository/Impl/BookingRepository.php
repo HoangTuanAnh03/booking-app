@@ -6,6 +6,8 @@ use App\Models\Booking;
 use App\Models\bookingCourt;
 use App\Models\FieldPrice;
 use App\Repository\IBookingRepository;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use function Symfony\Component\String\b;
 
@@ -82,5 +84,44 @@ class BookingRepository implements IBookingRepository
                 created_at DESC
             ", [now()->subMinutes(30)])
             ->paginate($perPage);
+    }
+
+    public function getTop5VenuesByRevenue($ownerId, $year, $month){
+        Log::info("getTop5VenuesByRevenue", [$ownerId, $year, $month]);
+        return DB::table('booking')
+            ->join('fields', 'booking.field_id', '=', 'fields.field_id')
+            ->join('venues', 'fields.venue_id', '=', 'venues.venue_id')
+            ->where('venues.owner_id', $ownerId)
+            ->where('booking.status', 'completed')
+            ->whereYear('booking.booking_date', $year)
+            ->whereMonth('booking.booking_date', $month)
+            ->selectRaw('
+                venues.venue_id,
+                venues.name as venue_name,
+                SUM(booking.total_price) as revenue
+            ')
+            ->groupBy('venues.venue_id', 'venues.name')
+            ->orderByDesc('revenue')
+            ->take(5)
+            ->get();
+    }
+
+    public function getTop5VenuesByBooking($ownerId, $year, $month){
+        return DB::table('booking')
+            ->join('fields', 'booking.field_id', '=', 'fields.field_id')
+            ->join('venues', 'fields.venue_id', '=', 'venues.venue_id')
+            ->where('venues.owner_id', $ownerId)
+            ->where('booking.status', 'completed')
+            ->whereYear('booking.booking_date', $year)
+            ->whereMonth('booking.booking_date', $month)
+            ->selectRaw('
+                venues.venue_id,
+                venues.name as venue_name,
+                COUNT(booking.booking_id) as booking_count
+            ')
+            ->groupBy('venues.venue_id', 'venues.name')
+            ->orderByDesc('booking_count')
+            ->take(5)
+            ->get();
     }
 }

@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\Venue;
 use App\Repository\IVenueRepository;
 use App\Services\IVenueService;
+use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -147,5 +148,13 @@ class VenueService implements IVenueService
 
     public function searchNearByLatLngForHome($lat, $lng, $distance): Collection{
         return $this->repository->searchNearByLatLngForHome($lat, $lng, $distance);
+    }
+
+    public function countVenuesByOwner(Request $request): int{
+        return $this->repository->countVenuesByOwner($request->user()->uuid);
+    }
+
+    public function countActiveVenuesByOwner(Request $request): int{
+        return $this->repository->countActiveVenuesByOwner($request->user()->uuid);
     }
 }

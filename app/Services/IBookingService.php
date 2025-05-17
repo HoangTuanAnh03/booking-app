@@ -86,4 +86,10 @@ interface IBookingService
     public function getPaymentQRCode(Request $request, $bookingId): array;
 
     public function getUserBookings(Request $request): array;
+
+    public function stats(Request $request): array;
+
+    public function getTop5VenuesByRevenue(Request $request);
+
+    public function getTop5VenuesByBooking(Request $request);
 }

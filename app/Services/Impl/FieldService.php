@@ -94,4 +94,8 @@ class FieldService implements IFieldService
     public function getFieldStas(): array{
         return $this->repository->getFieldStas();
     }
+
+    public function getTotalField(Request $request){
+        return $this->repository->getTotalField($request->user()->uuid);
+    }
 }

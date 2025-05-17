@@ -8,6 +8,7 @@ use App\Http\Controllers\FieldOpeningHoursController;
 use App\Http\Controllers\FieldPriceController;
 use App\Http\Controllers\LocationServiceController;
 use App\Http\Controllers\MapController;
+use App\Http\Controllers\OwnerController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SportTypeController;
 use App\Http\Controllers\UserController;
@@ -166,6 +167,7 @@ Route::prefix('/bookings')->group(function () {
             Route::get('/{id}/complete', [BookingController::class, 'completeBooking']);
             Route::post('/lock', [BookingController::class, 'lock']);
             Route::get('/', [BookingController::class, 'getOwnerBookingStats']);
+            Route::get('/owner/stats', [BookingController::class, 'stats']);
         });
         Route::middleware('ability:owner,user')->group(function () {
             Route::get('/{id}/cancel', [BookingController::class, 'cancelBooking']);
@@ -184,5 +186,9 @@ Route::prefix('/admin')->group(function () {
         Route::get('/dashboard', [AdminController::class, 'dashboard']);
     });
 });
-
+Route::prefix('/owner')->group(function () {
+    Route::middleware(['auth:sanctum', 'ability:owner'])->group(function () {
+        Route::get('/dashboard', [OwnerController::class, 'dashboard']);
+    });
+});
 Route::get('/map/getByName', [MapController::class, 'getLatLngByName']);

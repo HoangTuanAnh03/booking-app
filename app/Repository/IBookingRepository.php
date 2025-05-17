@@ -70,4 +70,8 @@ interface IBookingRepository
      * @return mixed The owner booking statistics.
      */
     public function getOwnerBookingStats(array $fieldIds, int $perPage): mixed;
+
+    public function getTop5VenuesByRevenue($ownerId, $year, $month);
+
+    public function getTop5VenuesByBooking($ownerId, $year, $month);
 }
