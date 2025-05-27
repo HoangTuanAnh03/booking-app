@@ -115,7 +115,7 @@ class FieldRepository implements IFieldRepository
         ];
     }
 
-    public function getCourtsByField(string $fieldId): array
+        public function getCourtsByField(string $fieldId): array
     {
         $date = now(); // hoặc Carbon::now() nếu chưa import
         $dayOfWeek = $date->format('l');
@@ -123,27 +123,18 @@ class FieldRepository implements IFieldRepository
         $openingHours = $this->getOpeningHours($field);
         [$openingTime, $closingTime] = $this->validateOpeningHours($openingHours);
 
-        $courts = $this->fetchCourts($fieldId, $date);
-        $courtSpecialTimes = $this->fetchCourtSpecialTimes($date, $courts);
-        $courtSlotsLocked = $this->courtSlotRepository->getLockedCourtSlotsByDateAndCourts(
-            $date,
-            $courts->pluck('court_id')->toArray()
-        );
-
-        $baseTimeLine = $this->generateBaseTimeLine($field, $openingTime, $closingTime, $date);
+        $courts = $this->fetchCourts($fieldId, $date)
+                ->map(function ($court) {
+                    return [
+                        'court_id' => $court->court_id,
+                        'field_id' => $court->field_id,
+                        'court_name' => $court->court_name,
+                        'is_active' => $court->is_active,
+                    ];
+                });
 
         return [
-            'base_time_line' => $baseTimeLine,
-            'courts' => $this->generateCourtTimeSlots(
-                $courts,
-                $field,
-                $openingTime,
-                $closingTime,
-                $date,
-                $courtSlotsLocked,
-                $courtSpecialTimes,
-                $baseTimeLine
-            )
+            'courts' => $courts
         ];
     }
 
@@ -224,7 +215,7 @@ class FieldRepository implements IFieldRepository
                     ->select('slot_id', 'court_id', 'start_time', 'end_time', 'is_looked', 'locked_by_owner')
                     ->orderBy('start_time', 'asc'),
             ])
-            ->select('court_id', 'court_name')
+            ->select('court_id', 'court_name', 'is_active', 'field_id')
             ->get()
             ->sortBy('court_name');
     }
